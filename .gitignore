@@ -1,0 +1,5 @@
+target
+*.iml
+**/output*.png
+*.png
+dependency-reduced-pom.xml
