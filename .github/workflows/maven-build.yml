@@ -7,6 +7,8 @@ on:
 
 jobs:
   build_api:
+    runs-on: ubuntu-latest
+
     steps:
       - name: "Chekout IIIF API (local version)"
         uses: actions/checkout@v2
@@ -24,6 +26,8 @@ jobs:
 
   build_server:
     needs: build_api
+    runs-on: ubuntu-latest
+
     steps:
       - name: "Chekout IIIF API (local version)"
         uses: actions/checkout@v2
