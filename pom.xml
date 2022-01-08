@@ -22,7 +22,7 @@
         <opencv.version>4.5.1-2</opencv.version>
         <junit.version>5.8.2</junit.version>
         <guava.version>31.0.1-jre</guava.version>
-        <logback.version>1.0.13</logback.version>
+        <logback.version>1.2.10</logback.version>
         <imgscalr.version>4.2</imgscalr.version>
         <jansi.version>2.4.0</jansi.version>
         <download.verbose>false</download.verbose>
