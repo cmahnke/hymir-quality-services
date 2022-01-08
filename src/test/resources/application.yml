@@ -1,0 +1,35 @@
+plugins:
+  packages: de.christianmahnke.lab.iiif.hymir
+
+custom:
+  image:
+    quality:
+      noop:
+        enabled: true
+      background:
+        enabled: true
+      fold:
+        enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      base-path: '/monitoring'
+      exposure:
+        include: '*'
+
+server:
+  error:
+    include-exception: true
+    include-stacktrace: always
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  config:
+    activate:
+      on-profile: local

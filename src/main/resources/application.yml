@@ -1,0 +1,6 @@
+plugins:
+  packages: de.christianmahnke.lab.iiif.hymir
+spring:
+  config:
+    activate:
+      on-profile: plugins

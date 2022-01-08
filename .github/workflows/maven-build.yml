@@ -1,0 +1,72 @@
+name: Hymir Quality Services build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_api:
+    steps:
+      - name: "Chekout IIIF API (local version)"
+        uses: actions/checkout@v2
+        with:
+          repository: 'cmahnke/iiif-apis'
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Build and publish package with maven
+        run: mvn -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_server:
+    needs: build_api
+    steps:
+      - name: "Chekout IIIF API (local version)"
+        uses: actions/checkout@v2
+        with:
+          repository: 'cmahnke/iiif-server-hymir'
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Set Maven repository
+        uses: whelk-io/maven-settings-xml-action@v20
+        with:
+          repositories: '[{"id": "github", "url": "https://maven.pkg.github.com/cmahnke/hymir-quality-services", "snapshots.enabled": "true"},{"id": "central", "url": "https://repo1.maven.org/maven2"}]'
+          servers: '[{ "id": "github", "username": "${env.GITHUB_ACTOR}", "password": "${env.GITHUB_TOKEN}" }]'
+          output_file: hymir-quality-services-settings.xml
+      - name: Build with local repository
+        run: mvn --batch-mode --settings hymir-quality-services-settings.xml -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip
+      - name: Publish package with maven
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: build_server
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Set Maven repository
+        uses: whelk-io/maven-settings-xml-action@v20
+        with:
+          repositories: '[{"id": "github", "url": "https://maven.pkg.github.com/cmahnke/hymir-quality-services", "snapshots.enabled": "true"},{"id": "central", "url": "https://repo1.maven.org/maven2"}]'
+          servers: '[{ "id": "github", "username": "${env.GITHUB_ACTOR}", "password": "${env.GITHUB_TOKEN}" }]'
+          output_file: hymir-quality-services-settings.xml
+      - name: Build with local repository
+        run: mvn --batch-mode --settings hymir-quality-services-settings.xml -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip
+      - name: Build and publish package with maven
+        run: mvn -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

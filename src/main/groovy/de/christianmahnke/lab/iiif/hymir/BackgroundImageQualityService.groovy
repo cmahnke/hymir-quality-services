@@ -47,6 +47,11 @@ class BackgroundImageQualityService implements ImageQualityService {
     }
 
     @Override
+    public String name() {
+        ""
+    }
+
+    @Override
     public ImageApiProfile.Quality getQuality() {
         return new ImageApiProfile.Quality(name);
     }

@@ -35,6 +35,45 @@
             <id>cmahnke</id>
         </developer>
     </developers>
+    <url>https://github.com/cmahnke/hymir-quality-services</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://github.com/cmahnke/hymir-quality-services/blob/main/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub cmahnke Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/cmahnke/hymir-quality-services</url>
+        </repository>
+    </distributionManagement>
+    <issueManagement>
+        <url>https://github.com/cmahnke/hymir-quality-services/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+    <scm>
+        <connection>https://github.com/cmahnke/hymir-quality-services.git</connection>
+        <developerConnection>git@github.com/cmahnke/hymir-quality-services.git</developerConnection>
+        <url>https://github.com/cmahnke/hymir-quality-services</url>
+    </scm>
+    <!-- TODO: This needs authentication, solve this by providing a settings.xml file
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/cmahnke/hymir-quality-services</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+    </repositories>
+    -->
 
     <dependencies>
         <dependency>
@@ -91,6 +130,13 @@
             <artifactId>jansi</artifactId>
             <version>${jansi.version}</version>
         </dependency>
+        <!-- TODO: Use this to generate Mapper objects for URL fixing
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.2</version>
+        </dependency>
+        -->
         <dependency>
             <!-- used for this: https://github.com/ihmcrobotics/ihmc-open-robotics-software/blob/09287cf6c061f60f73dd699aad356eedaa0830aa/ihmc-perception/src/main/java/us/ihmc/ihmcPerception/OpenCVTools.java -->
             <groupId>us.ihmc</groupId>
@@ -362,6 +408,12 @@
                                 <exclude>META-INF/*.RSA</exclude>
                             </excludes>
                         </filter>
+                        <filter>
+                            <artifact>de.christianmahnke.lab.iiif.hymir:hymir-quality-services</artifact>
+                            <excludes>
+                                <exclude>application.yml</exclude>
+                            </excludes>
+                        </filter>
                     </filters>
                     <artifactSet>
                         <includes>
@@ -375,16 +427,6 @@
                             <include>org.slf4j:slf4j-api</include>
                             -->
                         </includes>
-                        <!--
-                        <excludes>
-                            <exclude>de.digitalcollections:iiif-server-hymir</exclude>
-                            <exclude>com.pushtorefresh:javac-warning-annotation</exclude>
-                            <exclude>org.junit.jupiter:junit-jupiter-api</exclude>
-                            <exclude>org.junit.jupiter:junit-jupiter-engine</exclude>
-                            <exclude>org.imgscalr:imgscalr-lib</exclude>
-                            <exclude>org.fusesource.jansi:jansi</exclude>
-                        </excludes>
-                        -->
                     </artifactSet>
                 </configuration>
                 <executions>
