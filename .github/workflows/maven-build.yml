@@ -20,7 +20,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build and publish package with maven
-        run: mvn -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip --batch-mode deploy
+        run: mvn -DskipNexusStagingDeployMojo -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip -DrepositoryId=github --batch-mode deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -45,9 +45,9 @@ jobs:
           servers: '[{ "id": "github", "username": "${env.GITHUB_ACTOR}", "password": "${env.GITHUB_TOKEN}" }]'
           output_file: hymir-quality-services-settings.xml
       - name: Build with local repository
-        run: mvn --batch-mode --settings hymir-quality-services-settings.xml -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip
+        run: mvn --batch-mode --settings hymir-quality-services-settings.xml -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip install
       - name: Publish package with maven
-        run: mvn --batch-mode deploy
+        run: mvn --batch-mode -DskipNexusStagingDeployMojo -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip -DrepositoryId=github deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -69,8 +69,8 @@ jobs:
           servers: '[{ "id": "github", "username": "${env.GITHUB_ACTOR}", "password": "${env.GITHUB_TOKEN}" }]'
           output_file: hymir-quality-services-settings.xml
       - name: Build with local repository
-        run: mvn --batch-mode --settings hymir-quality-services-settings.xml -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip
+        run: mvn --batch-mode --settings hymir-quality-services-settings.xml -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip install
       - name: Build and publish package with maven
-        run: mvn -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip --batch-mode deploy
+        run: mvn --batch-mode  DskipNexusStagingDeployMojo -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip -DrepositoryId=github deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
