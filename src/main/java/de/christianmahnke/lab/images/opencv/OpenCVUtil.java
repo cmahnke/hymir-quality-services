@@ -86,6 +86,8 @@ public class OpenCVUtil {
         return Imgcodecs.imread(file.getAbsolutePath(), Imgcodecs.IMREAD_COLOR);
     }
 
+    public static boolean writeImage(String file, Mat mat) { return Imgcodecs.imwrite(file, mat); }
+
     // See https:\/\/riptutorial.com\/opencv\/example\/21963\/converting-an-mat-object-to-an-bufferedimage-object
     // With enhancements to handle alpha channels
     public static BufferedImage matToBufferedImage(Mat mat) {

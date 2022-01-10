@@ -40,12 +40,14 @@ import static java.lang.Math.*
 @CompileStatic
 @Slf4j
 class FoldRemover implements AutoCloseable {
+    protected boolean keepSize = false
+
     // Tweaks (These are just te defaults for every operation)
     static double minLineLengthDiv = 1.2
     static double maxLineGapDiv = 4
     static double minAngle = -88
     static double maxAngle = -92
-    static double xWheight = 2
+    static double xWheight = 3
     static double xWindow = 0.2
 
     protected Mat img = null
@@ -92,7 +94,35 @@ class FoldRemover implements AutoCloseable {
 
     Mat process() {
         this.page = new Page(this.img, this.side)
-        return this.page.rotate()
+        Mat rotated = this.page.rotate()
+
+        if (keepSize) {
+            if (this.img.size().equals(rotated.size())) {
+                return rotated
+            }
+            int width = (int) rotated.size().width
+            int height = (int) rotated.size().height
+            int y = ((int) floor((this.img.size().height - rotated.size().height) / 2))
+            int x
+            if (this.side == Side.VERSO) {
+                x = 0
+            } else {
+                x = (int) (rotated.size().width - this.img.size().width)
+            }
+            Mat submat = this.img.submat(new Rect(x, y, width, height));
+            rotated.copyTo(submat)
+            return this.img
+        }
+
+        return rotated
+    }
+
+    public setKeepSize(boolean keepSize) {
+        this.keepSize = keepSize
+    }
+
+    public boolean getKeepSize() {
+        return this.keepSize
     }
 
     protected Page getPage() {
@@ -175,7 +205,6 @@ class FoldRemover implements AutoCloseable {
             return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2))
         }
 
-
         static Double calcAngleDeg(Tuple2<Point, Point> line) {
             def (x1, y1, x2, y2) = [line.getV1().x, line.getV1().y, line.getV2().x, line.getV2().y]
             return atan2(y2 - y1, x2 - x1) * 180.0 / Math.PI
@@ -210,7 +239,7 @@ class FoldRemover implements AutoCloseable {
         }
 
         Point bottom() {
-            if (this.x1 >= this.x2 && this.y1 >= this.y2) {
+            if (this.y1 <= this.y2) {
                 return new Point(this.x2, this.y2)
             } else {
                 return new Point(this.x1, this.y1)
@@ -218,7 +247,7 @@ class FoldRemover implements AutoCloseable {
         }
 
         Point top() {
-            if (this.x1 <= this.x2 && this.y1 <= this.y2) {
+            if (this.y1 <= this.y2) {
                 return new Point(this.x1, this.y1)
             } else {
                 return new Point(this.x2, this.y2)
@@ -277,6 +306,7 @@ class FoldRemover implements AutoCloseable {
     }
 
     @CompileStatic
+    @TypeChecked
     class Page implements DebugDrawable {
         Mat img
         Side side
@@ -289,10 +319,10 @@ class FoldRemover implements AutoCloseable {
         List<Point> rotatedBox
         boolean fitBox = true
         // Debug
-        int boxWidth = 2
-        int rotatedBoxWidth = 4
-        CV.RGBA boxColor = new CV.RGBA(0, 127, 127, 127)
-        CV.RGBA rotatedBoxColor = new CV.RGBA(0, 255, 255, 255)
+        int boxWidth = 3
+        int rotatedBoxWidth = 5
+        CV.RGBA rotatedBoxColor = new CV.RGBA(0, 127, 127, 255)
+        CV.RGBA boxColor = new CV.RGBA(0, 255, 255, 255)
 
         Page(Mat img, Side side) {
             this.img = img
@@ -334,7 +364,7 @@ class FoldRemover implements AutoCloseable {
             return lines.findAll { Line line -> min <= line.averageX && line.averageX <= max }
         }
 
-        def calcCutScore (Line line, double xWheight = FoldRemover.xWheight)  {
+        def calcCutScore(Line line, double xWheight = FoldRemover.xWheight) {
             double x
             if (this.side == Side.VERSO) {
                 x = line.width
@@ -366,7 +396,7 @@ class FoldRemover implements AutoCloseable {
                 //foldLines = this.lines.findAll { Line line -> line.x1 < this.w / 2 }
             }
             if (FoldRemover.xWheight > 0) {
-                foldLines.each {Line line -> calcCutScore(line, xWheight)}
+                foldLines.each { Line line -> calcCutScore(line, xWheight) }
                 foldLines.sort({ Line line -> line.score })
             } else {
                 foldLines.sort({ Line line -> line.distance })
@@ -380,39 +410,65 @@ class FoldRemover implements AutoCloseable {
         }
 
         def calculateBox() {
-            if (this.lines == null) {
+            if (this.cut == null) {
                 this.findCut()
             }
-            double w = this.w
-            if (this.cut.bottom().x < this.cut.top().x) {
-                w = w - this.cut.top().x
-            } else {
-                w = w - this.cut.bottom().x
-            }
-            if (this.side == Side.VERSO) {
-                w = -(this.w - w)
-            }
-            double angle = this.cut.angleRad + toRadians(90)
 
+            double verticalAngle = this.cut.angleRad + toRadians(90)
+            log.trace("Calculating box for side ${side}, angle '${cut.angleDeg}' (${this.cut.top()}, ${this.cut.bottom()})")
             if (this.fitBox == false) {
-                def pTop = Line.calculatePoint(new Point(this.cut.top().x, this.cut.top().y), angle, w)
-                def pBottom = Line.calculatePoint(new Point(this.cut.bottom().x, this.cut.bottom().y), angle, w)
+                def pTop = Line.calculatePoint(new Point(this.cut.top().x, this.cut.top().y), verticalAngle, w)
+                def pBottom = Line.calculatePoint(new Point(this.cut.bottom().x, this.cut.bottom().y), verticalAngle, w)
                 this.box = new Tuple(new Point(this.cut.top().x, this.cut.top().y), pTop, pBottom, new Point(this.cut.bottom().x, this.cut.bottom().y))
             } else {
+                def Point tl, tr, bl, br
+                def int edgeH
 
                 if (this.cut.angleDeg > -90) {
-                    // Tilted to the right, lower initial point need to be adjusted to fit the page
-                    Point pTop = Line.calculatePoint(new Point(this.cut.top().x, this.cut.top().y), angle, w)
-                    Point pBottom = Line.calculatePoint((pTop), this.cut.angleRad, -(this.h - pTop.y))
-                    Point npBottom = Line.calculatePoint((pBottom), angle, -(w))
-                    this.box = new Tuple(new Point(this.cut.top().x, this.cut.top().y), pTop, pBottom, npBottom)
+                    if (side == Side.RECTO) {
+                        //left tilted
+                        int edgeW = (int) (this.w - this.cut.top().x)
+                        tl = this.cut.top()
+                        tr = Line.calculatePoint(tl, verticalAngle, edgeW)
+                        edgeH = (int) (this.h - tr.y)
+                        br = Line.calculatePoint(tr, this.cut.angleRad, -(edgeH))
+                        bl = Line.calculatePoint(br, verticalAngle, -(edgeW))
+                    } else {
+                        //right tilted
+                        int edgeW = (int) (this.w - (this.w - this.cut.bottom().x))
+                        br = this.cut.bottom()
+                        bl = Line.calculatePoint(br, verticalAngle, -(edgeW))
+                        edgeH = (int) (this.h - (this.h - bl.y))
+                        tl = Line.calculatePoint(bl, this.cut.angleRad, edgeH)
+                        tr = Line.calculatePoint(tl, verticalAngle, edgeW)
+                    }
                 } else {
-                    // Tilted to the left, upper initial point need to be adjusted to fit the page
-                    Point pBottom = Line.calculatePoint(new Point(this.cut.bottom().x, this.cut.bottom().y), angle, w)
-                    Point pTop = Line.calculatePoint((pBottom), this.cut.angleRad, -(this.h - pBottom.y))
-                    Point npTop = Line.calculatePoint((pTop), angle, -(w))
-                    this.box = new Tuple(npTop, pTop, pBottom, new Point(this.cut.bottom().x, this.cut.bottom().y))
+                    if (side == Side.RECTO) {
+                        int edgeW = (int) (this.w - this.cut.bottom().x)
+                        bl = this.cut.bottom()
+                        br = Line.calculatePoint(bl, verticalAngle, edgeW)
+                        edgeH = (int) (this.h - (this.h - br.y))
+                        tr = Line.calculatePoint(br, this.cut.angleRad, edgeH)
+                        tl = Line.calculatePoint(tr, verticalAngle, -(edgeW))
+                    } else {
+                        int w = (int) (this.w - (this.w - this.cut.top().x))
+                        tr = this.cut.top()
+                        tl = Line.calculatePoint(tr, verticalAngle, w)
+                        edgeH = (int) (this.h - tl.y)
+                        bl = Line.calculatePoint(tl, this.cut.angleRad, edgeH)
+                        br = Line.calculatePoint(bl, verticalAngle, -(w))
+
+                    }
                 }
+                this.box = new Tuple(tl, tr, bl, br)
+
+            }
+            log.trace("Box is ${this.box}")
+        }
+
+        def calculateRotatedBox() {
+            if (this.box == null) {
+                this.calculateBox()
             }
             this.rotatedBox = new ArrayList<Point>(this.box)
             this.box.eachWithIndex { coord, i ->
@@ -425,6 +481,7 @@ class FoldRemover implements AutoCloseable {
                 //this.rotatedBox.set(i, new Point(calculated[0], calculated[1]))
                 this.rotatedBox.set(i, new Point(calculated[0].toInteger(), calculated[1].toInteger()))
             }
+            log.trace("Rotated box is at ${this.rotatedBox}")
         }
 
         protected double[] matMul(Mat mat, List<Double> vector) {
@@ -449,14 +506,16 @@ class FoldRemover implements AutoCloseable {
                 return this.img
             }
             if (this.rotatedBox == null) {
-                this.calculateBox()
+                this.calculateRotatedBox()
             }
             Mat matrix = CV.getRotationMatrix2D(this.center, this.cut.angleDeg + 90, null)
-            def (Point p1, Point p2) = [this.rotatedBox.get(0), this.rotatedBox.get(2)]
-            log.debug("extracting at ${p1.toString()} -> ${p2.toString()} (of ${this.w}x${this.h})")
+            def (Point p1, Point p2) = [this.rotatedBox.get(0), this.rotatedBox.get(3)]
+            log.debug("extracting from top left ${p1.toString()} lo lower right ${p2.toString()} (of ${this.w}x${this.h})")
+
             Mat rotated = CV.warpAffine(this.img, matrix, this.img.size(), CV.INTER_CUBIC, CV.BORDER_REPLICATE)
 
-            Rect crop = new Rect(p1.x, p1.y, (p2.x - p1.x + 1), (p2.y - p1.y + 1))
+            Rect crop = new Rect(p1.x, p1.y, (p2.x - p1.x), (p2.y - p1.y))
+            //log.trace("Croping at ${crop}")
             return rotated.submat(crop)
         }
 
@@ -500,6 +559,10 @@ class FoldRemover implements AutoCloseable {
         }
 
         protected static drawBox(Mat inMat, List<Point> box, RGBA color, int width) {
+            if (box == null || box.size() < 1) {
+                return
+            }
+            box = Arrays.asList(box.get(0), box.get(1), box.get(3), box.get(2))
             for (int i = 0; i < box.size() - 1; i++) {
                 def p1 = new Point(box.get(i).x, box.get(i).y)
                 def p2 = new Point(box.get(i + 1).x, box.get(i + 1).y)
@@ -521,16 +584,6 @@ class FoldRemover implements AutoCloseable {
 
             drawBox(inMat, this.box, this.boxColor, this.boxWidth)
             drawBox(inMat, this.rotatedBox, this.rotatedBoxColor, this.rotatedBoxWidth)
-            /*
-            for (int i = 0; i < this.box.size() - 1; i++) {
-                def p1 = new Point(this.box.get(i).x, this.box.get(i).y)
-                def p2 = new Point(this.box.get(i + 1).x, this.box.get(i + 1).y)
-                log.debug("Drawing line ${i} from ${p1} to ${p2}")
-                CV.line(inMat, p1, p2, this.color, this.width)
-            }
-            log.debug("""Drawing line from ${this.box.get(3).x},${this.box.get(3).y} to ${this.box.get(0).x}, ${this.box.get(0).y}""")
-            CV.line(inMat, new Point(this.box.get(3).x, this.box.get(3).y), new Point(this.box.get(0).x, this.box.get(0).y), this.color, this.width)
-            */
 
             for (Line l : this.lines) {
                 l.debugDraw(inMat)

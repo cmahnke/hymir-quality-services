@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <logger name="de.christianmahnke.lab" level="debug" />
+    <logger name="de.christianmahnke.lab" level="trace" />
 
     <root level="TRACE">
         <appender-ref ref="CONSOLE"/>

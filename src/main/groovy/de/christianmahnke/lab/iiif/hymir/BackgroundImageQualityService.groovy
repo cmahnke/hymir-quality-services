@@ -23,13 +23,14 @@ import de.digitalcollections.iiif.hymir.image.business.api.ImageQualityService
 import de.digitalcollections.iiif.model.image.ImageApiProfile
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
+import groovy.util.logging.Slf4j
 import org.opencv.core.Mat
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
 
 import java.awt.image.BufferedImage
 
-import org.springframework.stereotype.Service
-
+@Slf4j
 @Service
 @TypeChecked
 @CompileStatic
@@ -67,9 +68,14 @@ class BackgroundImageQualityService implements ImageQualityService {
     }
 
     BufferedImage processImage(BufferedImage img) {
+        log.info("Processing '${this.identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
         BackgroundRemover br = new BackgroundRemover(img)
         Mat result = br.process()
         return OpenCVUtil.matToBufferedImage(result)
     }
 
+    @Override
+    public boolean hasAlpha() {
+        return true;
+    }
 }

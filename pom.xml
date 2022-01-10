@@ -130,6 +130,12 @@
             <artifactId>jansi</artifactId>
             <version>${jansi.version}</version>
         </dependency>
+        <!-- TODO use this to extract values from LIDO -->
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>10.6</version>
+        </dependency>
         <!-- TODO: Use this to generate Mapper objects for URL fixing
         <dependency>
             <groupId>org.ow2.asm</groupId>
@@ -265,6 +271,10 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
             </resource>
+            <resource>
+                <directory>src/test/resources</directory>
+                <filtering>false</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -325,43 +335,69 @@
                         </goals>
                         <configuration>
                             <target unless="maven.test.skip">
-                                <property name="download.dir" value="${project.basedir}/src/test/resources/images"/>
+                                <property name="download.dir.images" value="${project.basedir}/src/test/resources/images"/>
+                                <property name="download.dir.data" value="${project.basedir}/src/test/resources/data"/>
                                 <echo message="Downloading test files to ${download.dir}"/>
-                                <mkdir dir="${download.dir}/record_DE-MUS-062622_kenom_127703"/>
+                                <mkdir dir="${download.dir.images}/record_DE-MUS-062622_kenom_127703"/>
+                                <mkdir dir="${download.dir.data}/record_DE-MUS-062622_kenom_127703"/>
                                 <get
                                         src="https://sammlungen.uni-goettingen.de/api/v1/records/record_DE-MUS-062622_kenom_127703/files/images/record_DE-MUS-062622_kenom_127703_vs.jpg/full/full/0/default.jpg"
-                                        dest="${download.dir}/record_DE-MUS-062622_kenom_127703/vs.jpg"
+                                        dest="${download.dir.images}/record_DE-MUS-062622_kenom_127703/vs.jpg"
                                         verbose="${download.verbose}"
                                         usetimestamp="true"/>
                                 <get
                                         src="https://sammlungen.uni-goettingen.de/api/v1/records/record_DE-MUS-062622_kenom_127703/files/images/record_DE-MUS-062622_kenom_127703_rs.jpg/full/full/0/default.jpg"
-                                        dest="${download.dir}/record_DE-MUS-062622_kenom_127703/rs.jpg"
+                                        dest="${download.dir.images}/record_DE-MUS-062622_kenom_127703/rs.jpg"
                                         verbose="${download.verbose}"
                                         usetimestamp="true"/>
-                                <mkdir dir="${download.dir}/DE-611-HS-3461927"/>
+                                <get
+                                        src="https://sammlungen.uni-goettingen.de/api/v1/records/record_DE-MUS-062622_kenom_127703/manifest"
+                                        dest="${download.dir.data}/record_DE-MUS-062622_kenom_127703/record_DE-MUS-062622_kenom_127703.json"
+                                        verbose="${download.verbose}"
+                                        usetimestamp="true"/>
+                                <get
+                                        src="https://sammlungen.uni-goettingen.de/lidoresolver?id=record_DE-MUS-062622_kenom_127703"
+                                        dest="${download.dir.data}/record_DE-MUS-062622_kenom_127703/record_DE-MUS-062622_kenom_127703.lido.xml"
+                                        verbose="${download.verbose}"
+                                        usetimestamp="true"/>
+                                <!-- Only the images of DE-611-HS-3461927 -->
+                                <mkdir dir="${download.dir.images}/DE-611-HS-3461927"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000001/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000001.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000001.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000002/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000002.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000002.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000003/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000003.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000003.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000004/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000004.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000004.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000005/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000005.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000005.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000006/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000006.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000006.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000007/full/full/0/default.jpg"
-                                     dest="${download.dir}/DE-611-HS-3461927/00000007.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000007.jpg" verbose="${download.verbose}"
                                      usetimestamp="true"/>
                             </target>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -375,6 +411,7 @@
                             <includes>
                                 <include>**/output*.png</include>
                                 <include>src/test/resources/images/**</include>
+                                <include>src/test/resources/data/**</include>
                             </includes>
                         </fileset>
                     </filesets>
@@ -409,6 +446,12 @@
                             </excludes>
                         </filter>
                         <filter>
+                            <artifact>net.sf.saxon:Saxon-HE</artifact>
+                            <excludes>
+                                <exclude>META-INF/services/javax.xml.transform.TransformerFactory</exclude>
+                            </excludes>
+                        </filter>
+                        <filter>
                             <artifact>de.christianmahnke.lab.iiif.hymir:hymir-quality-services</artifact>
                             <excludes>
                                 <exclude>application.yml</exclude>
@@ -421,6 +464,7 @@
                             <include>org.openpnp:opencv</include>
                             <include>com.google.guava:guava</include>
                             <include>us.ihmc:ihmc-perception</include>
+                            <include>net.sf.saxon:Saxon-HE</include>
                             <!--
                             <include>ch.qos.logback:logback-classic</include>
                             <include>ch.qos.logback:logback-core</include>
@@ -442,8 +486,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
             </plugin>
-            <!-- <plugin> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-maven-plugin</artifactId> <executions> <execution> <goals> <goal>build-info</goal> <goal>repackage</goal> </goals> </execution> </executions> <configuration>
-            <classifier>exec</classifier> </configuration> </plugin> -->
         </plugins>
     </build>
 </project>

@@ -1,6 +1,23 @@
 plugins:
   packages: de.christianmahnke.lab.iiif.hymir
+
+custom:
+  image:
+    quality:
+      noop:
+        enabled: true
+      background:
+        enabled: true
+      fold:
+        enabled: true
+  iiif:
+    identifier:
+      escape: false
+
 spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   config:
     activate:
       on-profile: plugins

@@ -18,13 +18,11 @@
 package de.christianmahnke.lab.iiif.hymir
 
 import de.christianmahnke.lab.iiif.hymir.util.BackendMappingUtil
-import de.digitalcollections.commons.file.config.SpringConfigCommonsFile
 import de.digitalcollections.iiif.hymir.model.api.HymirPlugin
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Import
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -39,7 +37,6 @@ import javax.servlet.http.HttpServletRequest
 @RequestMapping(value = "/mappings")
 @CompileStatic
 @TypeChecked
-@Import(SpringConfigCommonsFile.class)
 class ProxyIntrospectionController implements HymirPlugin {
 
     @Value('${custom.iiif.image.urlPrefix:/image/v2/}')
@@ -92,7 +89,11 @@ class ProxyIntrospectionController implements HymirPlugin {
         js.append("function rewriteURL(url) {\n")
         bmu.mappingPatterns(newPrefix).each { from, to ->
             from = from.replace('/', '\\/')
-            js.append("\t" + 'url = url.replace(/' + from + '/mg, "' + to + '");' + "\n")
+            // We could check for '/info.json' suffix here but then this wouldn't be API agnostic anymore
+            js.append("\t" + '// url = url.replace(/' + from + '/mg, "' + to + '");' + "\n")
+            js.append("\t" + 'if (url.match(/' + from + '/mg)) {' + "\n")
+            js.append("\t\t" + 'return url.replace(/' + from + '/mg, "' + to + '");' + "\n")
+            js.append("\t}\n")
         }
         js.append("\treturn url;\n")
         js.append("}\n")

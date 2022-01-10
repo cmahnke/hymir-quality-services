@@ -17,19 +17,20 @@
  */
 package de.christianmahnke.lab.iiif.hymir
 
+import de.christianmahnke.lab.images.opencv.FoldRemover
 import de.christianmahnke.lab.images.opencv.OpenCVUtil
 import de.digitalcollections.iiif.hymir.image.business.api.ImageQualityService
-import de.christianmahnke.lab.images.opencv.FoldRemover
 import de.digitalcollections.iiif.model.image.ImageApiProfile
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
+import groovy.util.logging.Slf4j
 import org.opencv.core.Mat
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
 
 import java.awt.image.BufferedImage
 
-import org.springframework.stereotype.Service
-
+@Slf4j
 @Service
 @TypeChecked
 @CompileStatic
@@ -73,7 +74,14 @@ class FoldImageQualityService implements ImageQualityService {
             this.side = "NONE"
         }
         FoldRemover fr = new FoldRemover(img, this.side)
+        fr.setKeepSize(true);
+        log.info("Processing '${this.identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
         Mat result = fr.process()
         return OpenCVUtil.matToBufferedImage(result)
+    }
+
+    @Override
+    public boolean hasAlpha() {
+        return false;
     }
 }

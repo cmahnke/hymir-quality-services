@@ -67,6 +67,8 @@ class BackgroundRemoverTest {
         BufferedImage image = ImageIO.read(files[0])
         BackgroundRemover br = new BackgroundRemover()
         BufferedImage result = br.processImage(image)
+        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
+        ImageIO.write(result, "png", new File(fileName))
         assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
     }
 

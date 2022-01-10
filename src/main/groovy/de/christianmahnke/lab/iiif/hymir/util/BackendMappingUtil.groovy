@@ -20,14 +20,17 @@ package de.christianmahnke.lab.iiif.hymir.util
 import de.digitalcollections.commons.file.backend.api.IdentifierToFileResourceUriResolver
 import de.digitalcollections.commons.file.backend.impl.IdentifierPatternToFileResourceUriResolverImpl
 import de.digitalcollections.commons.file.backend.impl.IdentifierPatternToFileResourceUriResolvingConfig
+import de.digitalcollections.commons.file.config.SpringConfigCommonsFile
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
 import org.springframework.stereotype.Service
 
 @CompileStatic
 @TypeChecked
 @Service
+@Import(SpringConfigCommonsFile.class)
 class BackendMappingUtil {
     @Autowired
     IdentifierPatternToFileResourceUriResolvingConfig resolverConfig
@@ -66,10 +69,11 @@ class BackendMappingUtil {
             }
 
             for (String resolved : replacements) {
-                def parts = resolved =~ /^(?<base>.*)(\$\d+)(.*?)$/
+                def parts = resolved =~ /^(?<base>.*)(\$\d+)(?<rest>.*?)$/
                 parts.matches()
                 resolved = parts.group("base")
-                patterns.put(resolved + suffix, newPrefix + '$1/info.json')
+                String rest = parts.group("rest")
+                patterns.put(resolved + suffix, newPrefix + '$1')
             }
         }
         patterns

@@ -37,11 +37,20 @@ class FoldRemoverTest {
     Map<Integer, File> files = new HashMap<Integer, File>()
     int count = 7
 
+    protected transformSingleMat (Integer k, File v, String suffix = "") {
+        BufferedImage image = ImageIO.read(v)
+        Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
+        FoldRemover fr = new FoldRemover(cvImage, FoldRemover.guessSide(v.toString()))
+        Mat result = fr.process()
+        def fileName = "output-${suffix}-" +  k.toString() + ".png"
+        OpenCVUtil.saveImage(result, fileName)
+    }
+
     @BeforeEach
     void setup() {
         (1..count).each {
             StringBuilder file = new StringBuilder("images/DE-611-HS-3461927/").append(String.format("%08d", it)).append(".jpg")
-            log.info("Added " + file.toString() + " to list")
+            log.info("Added " + file.toString() + " as nr ${it} to list")
             files[it] = ResourceUtils.getFile("classpath:" + file.toString())
         }
     }
@@ -54,15 +63,44 @@ class FoldRemoverTest {
     }
 
     @Test
+    void testGuessedImage() {
+        File v = files.get(1)
+        BufferedImage image = ImageIO.read(v)
+        Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
+        FoldRemover fr = new FoldRemover(cvImage, FoldRemover.guessSide(v.toString()))
+        Mat result = fr.process()
+    }
+
+    @Test
     void testTransformMat(TestInfo testInfo) {
         files.forEach (k, v) -> {
-            BufferedImage image = ImageIO.read(v)
-            Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
-            FoldRemover fr = new FoldRemover(cvImage, FoldRemover.guessSide(v.toString()))
-            Mat result = fr.process()
-            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-" +  k.toString() + ".png"
-            OpenCVUtil.saveImage(result, fileName)
+            log.info("Transforming ${v} using Mat")
+            transformSingleMat(k, v, String.join("-", testInfo.getTags()))
         }
+    }
+
+    @Test
+    @Tag('keep-size')
+    void testTransformSize(TestInfo testInfo) {
+        files.forEach (k, v) -> {
+            log.info("Transforming ${v} using Mat and checking if sizes match")
+            Mat image = OpenCVUtil.loadImage(v)
+            FoldRemover fr = new FoldRemover(image, FoldRemover.guessSide(v.toString()))
+            fr.setKeepSize(true)
+            String side = FoldRemover.guessSide(v.toString())
+            Mat result = fr.process()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-${k}.png"
+            assertTrue(image.size().equals(result.size()))
+            OpenCVUtil.writeImage(fileName, result)
+        }
+    }
+
+    @Test
+    @Tag('prototype-image')
+    void testTransformPrototype(TestInfo testInfo) {
+        def i = 7
+        log.info("Processing nr ${i} - ${files.get(i)}")
+        transformSingleMat(i, files.get(i), String.join("-", testInfo.getTags()))
     }
 
     @Test
@@ -74,28 +112,28 @@ class FoldRemoverTest {
             String side = FoldRemover.guessSide(v.toString())
             FoldRemover fr = new FoldRemover(cvImage, side)
             BufferedImage result = fr.processImage(image, side)
-            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-" +  k.toString() + ".png"
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-" + k.toString() + ".png"
             ImageIO.write(result, "png", new File(fileName))
         }
     }
     @Test
-    @Tag('debug')
+    @Tag('debug-draw')
     void testDebug(TestInfo testInfo) {
         boolean failed = false
         files.forEach (k, v) -> {
             Mat cvImage = OpenCVUtil.loadImage(v)
             def side = FoldRemover.guessSide(v.toString())
             FoldRemover fr = new FoldRemover(cvImage, side)
-            log.info("""Processing ${v.toString()} (guessed ${side})""")
+            log.info("Processing ${v.toString()} (guessed ${side})")
 
             FoldRemover.Page p = fr.getPage()
             p.findLines()
             if (p.debugColorize()) {
                 Mat debugMat = OpenCVUtil.loadImage(v)
-                p.findCut()
+                p.calculateRotatedBox()
                 p.debugDraw(debugMat)
-                def fileName = "output-" + String.join("-", testInfo.getTags()) + "-" +  k.toString()+ "-" + side + ".png"
-                log.debug("""Writing image ${fileName}""")
+                def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-"+  k.toString()  + ".png"
+                log.debug("Writing image ${fileName}")
                 OpenCVUtil.saveImage(debugMat, fileName)
                 try {
                     fr.process()
@@ -104,6 +142,5 @@ class FoldRemoverTest {
                 }
             }
         }
-        assertTrue(failed)
     }
 }

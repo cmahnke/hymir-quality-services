@@ -9,7 +9,10 @@ custom:
       background:
         enabled: true
       fold:
-        enabled: false
+        enabled: true
+  iiif:
+    identifier:
+      escape: false
 
 management:
   endpoint:
@@ -25,11 +28,12 @@ server:
   error:
     include-exception: true
     include-stacktrace: always
+  tomcat:
+    accesslog:
+      directory: "./var/log"
 
 spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  config:
-    activate:
-      on-profile: local
+
