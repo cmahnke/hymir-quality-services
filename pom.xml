@@ -22,7 +22,7 @@
         <opencv.version>4.5.1-2</opencv.version>
         <junit.version>5.8.2</junit.version>
         <guava.version>31.0.1-jre</guava.version>
-        <logback.version>1.2.0</logback.version>
+        <logback.version>1.0.13</logback.version>
         <imgscalr.version>4.2</imgscalr.version>
         <jansi.version>2.4.0</jansi.version>
         <download.verbose>false</download.verbose>
@@ -49,6 +49,11 @@
             <name>GitHub cmahnke Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/cmahnke/hymir-quality-services</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub cmahnke Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/cmahnke/hymir-quality-services</url>
+        </snapshotRepository>
     </distributionManagement>
     <issueManagement>
         <url>https://github.com/cmahnke/hymir-quality-services/issues</url>
@@ -271,11 +276,13 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
             </resource>
-            <resource>
+        </resources>
+        <testResources>
+            <testResource>
                 <directory>src/test/resources</directory>
                 <filtering>false</filtering>
-            </resource>
-        </resources>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -337,7 +344,7 @@
                             <target unless="maven.test.skip">
                                 <property name="download.dir.images" value="${project.basedir}/src/test/resources/images"/>
                                 <property name="download.dir.data" value="${project.basedir}/src/test/resources/data"/>
-                                <echo message="Downloading test files to ${download.dir}"/>
+                                <echo message="Downloading test files to ${download.dir.images}"/>
                                 <mkdir dir="${download.dir.images}/record_DE-MUS-062622_kenom_127703"/>
                                 <mkdir dir="${download.dir.data}/record_DE-MUS-062622_kenom_127703"/>
                                 <get

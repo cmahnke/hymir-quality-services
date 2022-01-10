@@ -49,7 +49,7 @@ jobs:
           repositories: '[{"id": "github", "url": "https://maven.pkg.github.com/cmahnke/hymir-quality-services", "snapshots.enabled": "true"},{"id": "central", "url": "https://repo1.maven.org/maven2"}]'
           servers: '[{ "id": "github", "username": "${env.GITHUB_ACTOR}", "password": "${env.GITHUB_TOKEN}" }]'
       - name: Build and publish package with maven
-        run: mvn --batch-mode -ntp -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip -Dspotbugs.skip=true -DskipLocalStaging=true -DgitHubDeploy -DrepositoryId=github deploy
+        run: mvn --batch-mode -ntp -Dfmt.skip -DskipTests -Dmaven.gitcommitid.skip -Dspotbugs.skip=true -DskipLocalStaging=true -DgitHubDeploy deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

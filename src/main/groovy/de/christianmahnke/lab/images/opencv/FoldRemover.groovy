@@ -107,7 +107,7 @@ class FoldRemover implements AutoCloseable {
             if (this.side == Side.VERSO) {
                 x = 0
             } else {
-                x = (int) (rotated.size().width - this.img.size().width)
+                x = (int) (this.img.size().width - rotated.size().width)
             }
             Mat submat = this.img.submat(new Rect(x, y, width, height));
             rotated.copyTo(submat)
