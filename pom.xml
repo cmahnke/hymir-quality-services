@@ -336,7 +336,7 @@
                 <executions>
                     <execution>
                         <id>download-test-files</id>
-                        <phase>process-test-resources</phase>
+                        <phase>generate-test-resources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
