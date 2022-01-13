@@ -83,16 +83,21 @@ class FoldRemover implements AutoCloseable {
     BufferedImage processImage(BufferedImage img, String side) {
         this.img = OpenCVUtil.bufferedImageToMat(img)
         this.side = Side.valueOf(side.toUpperCase())
+        return processImage()
+    }
+
+    BufferedImage processImage() {
         try {
             return OpenCVUtil.matToBufferedImage(this.process())
         } catch (RecognitionException | org.opencv.core.CvException e) {
             log.warn("""Got exception ${e.getMessage()}, returning input image""")
-            img.setRGB(1, 1, Color.RED.getRGB())
-            return img
+            BufferedImage input = OpenCVUtil.matToBufferedImage(this.img)
+            input.setRGB(1, 1, Color.RED.getRGB())
+            return input
         }
     }
 
-    Mat process() {
+    protected Mat process() {
         this.page = new Page(this.img, this.side)
         Mat rotated = this.page.rotate()
 

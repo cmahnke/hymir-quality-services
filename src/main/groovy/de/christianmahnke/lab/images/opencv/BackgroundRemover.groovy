@@ -52,7 +52,11 @@ class BackgroundRemover implements AutoCloseable {
     }
 
     BackgroundRemover(BufferedImage img) {
-        this(OpenCVUtil.bufferedImageToMat(img))
+        if (img.getColorModel().hasAlpha()) {
+            this.img = OpenCVUtil.bufferedImageToMat(img, true)
+        } else {
+            this.img = OpenCVUtil.bufferedImageToMat(img)
+        }
     }
 
     BackgroundRemover(String file) {
@@ -64,9 +68,12 @@ class BackgroundRemover implements AutoCloseable {
     }
 
     BufferedImage processImage(BufferedImage img) {
-        this.img = OpenCVUtil.bufferedImageToMat(img)
-
-        //TODO: This can be optimized by adding the alpha channel and rearranging the channels in one step
+        if (img.getColorModel().hasAlpha()) {
+            this.img = OpenCVUtil.bufferedImageToMat(img, true)
+        } else {
+            this.img = OpenCVUtil.bufferedImageToMat(img)
+        }
+          //TODO: This can be optimized by adding the alpha channel and rearranging the channels in one step
         return OpenCVUtil.matToBufferedImage(this.process())
     }
 
@@ -75,12 +82,15 @@ class BackgroundRemover implements AutoCloseable {
         return OpenCVUtil.matToBufferedImage(this.process())
     }
 
-    Mat process() {
+    protected Mat process() {
         Mat alphaMask = generateAlphaMask(this.img)
         return OpenCVUtil.addAlpha(this.img, alphaMask)
     }
 
     protected Mat generateAlphaMask(Mat inMat) {
+        if (inMat.channels() > 3) {
+            throw new IllegalStateException("Number of channels in input image must be 1 or 3")
+        }
         Mat wrkMat = new Mat()
         int w = inMat.cols()
         int h = inMat.rows()

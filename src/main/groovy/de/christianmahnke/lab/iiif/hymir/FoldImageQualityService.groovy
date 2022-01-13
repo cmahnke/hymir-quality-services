@@ -35,8 +35,6 @@ import java.awt.image.BufferedImage
 @TypeChecked
 @CompileStatic
 class FoldImageQualityService implements ImageQualityService {
-    String identifier
-    String side
 
     @Value('${custom.image.quality.fold.enabled:true}')
     private boolean enabled
@@ -63,21 +61,19 @@ class FoldImageQualityService implements ImageQualityService {
         return enabled
     }
 
-    void setIdentifier(String identifier) {
-        this.identifier = identifier
-        this.side = FoldRemover.guessSide(identifier)
-    }
-
-    BufferedImage processImage(BufferedImage img) {
+    BufferedImage processImage(String identifier, BufferedImage img) {
+        String side = null
         Mat cvImage = OpenCVUtil.bufferedImageToMat(img)
-        if (this.side == null) {
-            this.side = "NONE"
+        if (identifier != null) {
+            side = FoldRemover.guessSide(identifier)
         }
-        FoldRemover fr = new FoldRemover(img, this.side)
+        if (side == null) {
+            side = "NONE"
+        }
+        FoldRemover fr = new FoldRemover(img, side)
         fr.setKeepSize(true);
-        log.info("Processing '${this.identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
-        Mat result = fr.process()
-        return OpenCVUtil.matToBufferedImage(result)
+        log.info("Processing '${identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
+        return fr.processImage()
     }
 
     @Override

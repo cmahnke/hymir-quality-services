@@ -72,4 +72,29 @@ class BackgroundRemoverTest {
         assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
     }
 
+    @Test
+    @Tag("bufferedImageRGB")
+    void transformBufferedImageRGB(TestInfo testInfo) {
+        BufferedImage image = OpenCVUtil.bufferedImageToRGB(ImageIO.read(files[0]))
+        BackgroundRemover br = new BackgroundRemover()
+        BufferedImage result = br.processImage(image)
+        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
+        ImageIO.write(result, "png", new File(fileName))
+        assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
+    }
+
+    @Test
+    @Tag("withAlpha")
+    void withAlpha(TestInfo testInfo) {
+        Mat inMat = OpenCVUtil.loadImage(files[0])
+        Mat alphaMat = OpenCVUtil.cvtColor(inMat, OpenCVUtil.COLOR_RGB2RGBA)
+        BufferedImage biA = OpenCVUtil.matToBufferedImage(alphaMat, true)
+        BackgroundRemover br1 = new BackgroundRemover(biA)
+        BufferedImage result1 = br1.processImage()
+        BackgroundRemover br2 = new BackgroundRemover()
+        BufferedImage result2 = br2.processImage(biA)
+        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
+        ImageIO.write(result2, "png", new File(fileName))
+    }
+
 }

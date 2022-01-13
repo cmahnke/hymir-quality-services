@@ -74,4 +74,10 @@ class OpenCVUtilTest {
         assertTrue(OpenCVUtil.isTransparent(OpenCVUtil.matToBufferedImage(OpenCVUtil.loadImage(this.transparent)), 1, 1), "Check transparency using OpenCV failed")
     }
 
+    @Test
+    void toMatRGB() {
+        Mat image = OpenCVUtil.bufferedImageToMat(ImageIO.read(this.transparent))
+        OpenCVUtil.writeImage("should-be-white.png", image)
+    }
+
 }

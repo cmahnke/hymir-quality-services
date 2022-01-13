@@ -18,13 +18,11 @@
 package de.christianmahnke.lab.iiif.hymir
 
 import de.christianmahnke.lab.images.opencv.BackgroundRemover
-import de.christianmahnke.lab.images.opencv.OpenCVUtil
 import de.digitalcollections.iiif.hymir.image.business.api.ImageQualityService
 import de.digitalcollections.iiif.model.image.ImageApiProfile
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
-import org.opencv.core.Mat
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -62,16 +60,10 @@ class BackgroundImageQualityService implements ImageQualityService {
         return enabled;
     }
 
-    @Override
-    void setIdentifier(String identifier) {
-        this.identifier = identifier
-    }
-
-    BufferedImage processImage(BufferedImage img) {
+    BufferedImage processImage(String identifier, BufferedImage img) {
         log.info("Processing '${this.identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
         BackgroundRemover br = new BackgroundRemover(img)
-        Mat result = br.process()
-        return OpenCVUtil.matToBufferedImage(result)
+        return br.processImage()
     }
 
     @Override

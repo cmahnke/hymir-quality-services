@@ -462,6 +462,9 @@
                             <artifact>de.christianmahnke.lab.iiif.hymir:hymir-quality-services</artifact>
                             <excludes>
                                 <exclude>application.yml</exclude>
+                                <!--
+                                <exclude>logback.xml</exclude>
+                                -->
                             </excludes>
                         </filter>
                     </filters>

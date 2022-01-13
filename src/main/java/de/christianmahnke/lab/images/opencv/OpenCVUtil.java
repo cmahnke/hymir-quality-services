@@ -28,9 +28,12 @@ import us.ihmc.ihmcPerception.OpenCVTools;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,18 +41,22 @@ import java.util.List;
 public class OpenCVUtil {
     // See https://docs.opencv.org/4.x/javadoc/constant-values.html
     public static final int THRESH_BINARY_INV = 1;
+
     public static final int COLOR_RGB2RGBA = 0;
-    public static final int COLOR_RGB2BGR = 4;
-    public static final int COLOR_BGR2RGBA = 2;
-    public static final int COLOR_BGRA2RGBA = 5;
     public static final int COLOR_BGR2BGRA = 0;
+    public static final int COLOR_BGRA2BGR = 1;
+    public static final int COLOR_BGR2RGBA = 2;
+    public static final int COLOR_RGB2BGR = 4;
+    public static final int COLOR_RGBA2BGRA = 5;
+    public static final int COLOR_BGRA2RGBA = 5;
+
     public static final int INTER_CUBIC = 2;
     public static final int INTER_LANCZOS4 = 4;
+
     public static final int BORDER_REPLICATE = 1;
     public static final int BORDER_TRANSPARENT = 5;
-    public static final int COLOR_RGBA2BGRA = 5;
-    public static final int COLOR_RGBA2ABGR = 1000;
 
+    public static final int COLOR_RGBA2ABGR = 1000;
 
     private static final OpenCVUtil instance;
 
@@ -91,6 +98,10 @@ public class OpenCVUtil {
     // See https:\/\/riptutorial.com\/opencv\/example\/21963\/converting-an-mat-object-to-an-bufferedimage-object
     // With enhancements to handle alpha channels
     public static BufferedImage matToBufferedImage(Mat mat) {
+        return matToBufferedImage(mat, null);
+    }
+
+    public static BufferedImage matToBufferedImage(Mat mat, Boolean rgb) {
         int type = BufferedImage.TYPE_BYTE_GRAY;
         if (mat.channels() > 1 && mat.channels() < 4) {
             type = BufferedImage.TYPE_3BYTE_BGR;
@@ -98,7 +109,12 @@ public class OpenCVUtil {
             type = BufferedImage.TYPE_4BYTE_ABGR;
         }
         if (mat.channels() > 3) {
-            mat = COLOR_RGBA2ABGR(mat);
+            if (rgb != null && rgb != false) {
+                type = BufferedImage.TYPE_3BYTE_BGR;
+                mat = cvtColor(mat, COLOR_BGRA2BGR);
+            } else {
+                mat = COLOR_RGBA2ABGR(mat);
+            }
         }
         int bufferSize = mat.channels() * mat.cols() * mat.rows();
         byte[] b = new byte[bufferSize];
@@ -107,6 +123,32 @@ public class OpenCVUtil {
         final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         System.arraycopy(b, 0, targetPixels, 0, b.length);
         return image;
+    }
+
+    /*
+    public static BufferedImage matToBufferedImageRGB(Mat mat) {
+        if (mat.channels() > 3) {
+            int bufferSize = 3 * mat.cols() * mat.rows();
+            byte[] b = new byte[bufferSize];
+            BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
+            final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+            System.arraycopy(b, 0, targetPixels, 0, b.length);
+            return image;
+        } else {
+            return matToBufferedImage(mat);
+        }
+    }
+    */
+
+    public static BufferedImage bufferedImageToRGB(BufferedImage img) {
+        if (BufferedImage.TYPE_INT_RGB != img.getType()) {
+            BufferedImage convertedImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+            convertedImage.getGraphics().drawImage(img, 0, 0, null);
+            convertedImage.getGraphics().dispose();
+            return  convertedImage;
+        } else {
+            return img;
+        }
     }
 
     protected static void cvtColor(Mat src, Mat dst, int mode) {
@@ -184,9 +226,29 @@ public class OpenCVUtil {
         return image;
     }
 
+    //TODO: Get this: https://stackoverflow.com/questions/33403526/how-to-match-the-color-models-of-bufferedimage-and-mat/33419984
+
     // See OpenCVTools.convertBufferedImageToMat (See https://github.com/ihmcrobotics/ihmc-open-robotics-software/blob/09287cf6c061f60f73dd699aad356eedaa0830aa/ihmc-perception/src/main/java/us/ihmc/ihmcPerception/OpenCVTools.java)
+    public static Mat bufferedImageToMat(BufferedImage img, Boolean rgb) {
+        if (img.getType() == BufferedImage.TYPE_INT_ARGB && rgb != null && rgb == true) {
+            Mat m = OpenCVTools.convertBufferedImageToMat(img);
+            return cvtColor(m, COLOR_ARGB);
+        } else if (img.getType() != BufferedImage.TYPE_INT_RGB) {
+            //TODO: get rid og this method an th dependency
+            return OpenCVTools.convertBufferedImageToMat(img);
+        } else {
+            Mat wrkMat = new Mat(img.getHeight(), img.getWidth(), CvType.CV_8UC3);
+            final int[] targetPixels = ((DataBufferInt)img.getRaster().getDataBuffer()).getData();
+            ByteBuffer byteBuffer = ByteBuffer.allocate(targetPixels.length * 4);
+            IntBuffer intBuffer = byteBuffer.asIntBuffer();
+            intBuffer.put(targetPixels);
+            wrkMat.put(0, 0, byteBuffer.array());
+            return wrkMat;
+        }
+    }
+
     public static Mat bufferedImageToMat(BufferedImage img) {
-        return OpenCVTools.convertBufferedImageToMat(img);
+        return bufferedImageToMat(img, null);
     }
 
     public static void saveImage(Mat img, String file) {
