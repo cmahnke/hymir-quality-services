@@ -27,6 +27,7 @@ import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Point
 import org.opencv.core.Scalar
+import org.opencv.highgui.HighGui
 
 import java.awt.image.BufferedImage
 
@@ -52,11 +53,15 @@ class BackgroundRemover implements AutoCloseable {
     }
 
     BackgroundRemover(BufferedImage img) {
-        if (img.getColorModel().hasAlpha()) {
-            this.img = OpenCVUtil.bufferedImageToMat(img, true)
-        } else {
-            this.img = OpenCVUtil.bufferedImageToMat(img)
-        }
+        //TODO: There is an error in here, some images get their channels mixed up
+
+        //Make sure we get BGR without alpha
+        this.img = OpenCVUtil.bufferedImageToMat(img, true)
+
+        //TODO: Remove me
+        //sleep(1)
+        //HighGui.imshow("Coin", this.img)
+        //HighGui.waitKey()
     }
 
     BackgroundRemover(String file) {
@@ -67,30 +72,30 @@ class BackgroundRemover implements AutoCloseable {
         this(OpenCVUtil.loadImage(url))
     }
 
-    BufferedImage processImage(BufferedImage img) {
-        if (img.getColorModel().hasAlpha()) {
-            this.img = OpenCVUtil.bufferedImageToMat(img, true)
-        } else {
-            this.img = OpenCVUtil.bufferedImageToMat(img)
-        }
-          //TODO: This can be optimized by adding the alpha channel and rearranging the channels in one step
-        return OpenCVUtil.matToBufferedImage(this.process())
-    }
-
     BufferedImage processImage() {
-        //TODO: This can be optimized by adding the alpha channel and rearranging the channels in one step
         return OpenCVUtil.matToBufferedImage(this.process())
     }
 
     protected Mat process() {
         Mat alphaMask = generateAlphaMask(this.img)
-        return OpenCVUtil.addAlpha(this.img, alphaMask)
+        Mat result = OpenCVUtil.addAlphaBGR(this.img, alphaMask)
+
+        //TODO: Remove me
+        OpenCVUtil.writeImage("test-bg-int.png", this.img)
+        OpenCVUtil.writeImage("test-bg-res.png", result)
+        sleep(1)
+
+
+        this.img.release()
+        alphaMask.release()
+        return result
     }
 
     protected Mat generateAlphaMask(Mat inMat) {
         if (inMat.channels() > 3) {
             throw new IllegalStateException("Number of channels in input image must be 1 or 3")
         }
+        // TODO: Check order of arguments
         Mat wrkMat = new Mat()
         int w = inMat.cols()
         int h = inMat.rows()

@@ -124,6 +124,13 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- The following two dependencies are only needed for testing -->
         <dependency>
             <groupId>org.imgscalr</groupId>
@@ -141,6 +148,11 @@
             <artifactId>Saxon-HE</artifactId>
             <version>10.6</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.0.5</version>
+        </dependency>
         <!-- TODO: Use this to generate Mapper objects for URL fixing
         <dependency>
             <groupId>org.ow2.asm</groupId>
@@ -148,126 +160,6 @@
             <version>9.2</version>
         </dependency>
         -->
-        <dependency>
-            <!-- used for this: https://github.com/ihmcrobotics/ihmc-open-robotics-software/blob/09287cf6c061f60f73dd699aad356eedaa0830aa/ihmc-perception/src/main/java/us/ihmc/ihmcPerception/OpenCVTools.java -->
-            <groupId>us.ihmc</groupId>
-            <artifactId>ihmc-perception</artifactId>
-            <version>0.13.0-210804-2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-perception-javacv</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-native-library-loader</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.georegression</groupId>
-                    <artifactId>georegression</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ejml</groupId>
-                    <artifactId>ejml-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ejml</groupId>
-                    <artifactId>ejml-ddense</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.boofcv</groupId>
-                    <artifactId>boofcv-ip</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.boofcv</groupId>
-                    <artifactId>boofcv-swing</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.boofcv</groupId>
-                    <artifactId>boofcv-io</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.boofcv</groupId>
-                    <artifactId>boofcv-recognition</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.boofcv</groupId>
-                    <artifactId>boofcv-calibration</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ddogleg</groupId>
-                    <artifactId>ddogleg</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>euclid</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-yovariables</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>simulation-construction-set</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-jmonkey-engine-toolkit</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-graphics-description</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-humanoid-robotics</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-communication</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-ros-tools</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-whole-body-controller</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-sensor-processing</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-robot-models</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-java-toolkit</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>us.ihmc</groupId>
-                    <artifactId>ihmc-robotics-toolkit</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-lang3</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.java.dev.jna</groupId>
-                    <artifactId>jna</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.java.dev.jna</groupId>
-                    <artifactId>jna</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.boofcv</groupId>
-                    <artifactId>boofcv-geo</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
     </dependencies>
 
     <build>
@@ -316,18 +208,39 @@
                             <goal>compile</goal>
                             <goal>compileTests</goal>
                         </goals>
+                        <configuration>
+                            <testSources>
+                                <testSource>
+                                    <directory>${project.basedir}/src/test/groovy</directory>
+                                    <includes>
+                                        <include>**/*.groovy</include>
+                                    </includes>
+                                </testSource>
+                            </testSources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-pattern</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <scripts>
+                                <script>${project.basedir}/src/test/resources/scripts/generate-pattern.groovy</script>
+                            </scripts>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <testSources>
-                        <testSource>
-                            <directory>${project.basedir}/src/test/groovy</directory>
-                            <includes>
-                                <include>**/*.groovy</include>
-                            </includes>
-                        </testSource>
-                    </testSources>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-all</artifactId>
+                        <version>${groovy.version}</version>
+                        <type>pom</type>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -342,7 +255,8 @@
                         </goals>
                         <configuration>
                             <target unless="maven.test.skip">
-                                <property name="download.dir.images" value="${project.basedir}/src/test/resources/images"/>
+                                <property name="download.dir.images"
+                                          value="${project.basedir}/src/test/resources/images"/>
                                 <property name="download.dir.data" value="${project.basedir}/src/test/resources/data"/>
                                 <echo message="Downloading test files to ${download.dir.images}"/>
                                 <mkdir dir="${download.dir.images}/record_DE-MUS-062622_kenom_127703"/>
@@ -370,25 +284,32 @@
                                 <!-- Only the images of DE-611-HS-3461927 -->
                                 <mkdir dir="${download.dir.images}/DE-611-HS-3461927"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000001/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000001.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000001.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000002/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000002.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000002.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000003/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000003.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000003.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000004/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000004.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000004.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000005/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000005.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000005.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000006/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000006.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000006.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000007/full/full/0/default.jpg"
-                                     dest="${download.dir.images}/DE-611-HS-3461927/00000007.jpg" verbose="${download.verbose}"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000007.jpg"
+                                     verbose="${download.verbose}"
                                      usetimestamp="true"/>
                             </target>
                         </configuration>
@@ -473,7 +394,6 @@
                             <include>org.codehaus.groovy:groovy</include>
                             <include>org.openpnp:opencv</include>
                             <include>com.google.guava:guava</include>
-                            <include>us.ihmc:ihmc-perception</include>
                             <include>net.sf.saxon:Saxon-HE</include>
                             <!--
                             <include>ch.qos.logback:logback-classic</include>

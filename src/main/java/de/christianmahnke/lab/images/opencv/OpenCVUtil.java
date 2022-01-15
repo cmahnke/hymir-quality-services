@@ -20,20 +20,20 @@ package de.christianmahnke.lab.images.opencv;
 import com.google.common.primitives.Doubles;
 import groovy.lang.Tuple;
 import nu.pattern.OpenCV;
+import org.opencv.core.Point;
 import org.opencv.core.*;
+import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import us.ihmc.ihmcPerception.OpenCVTools;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,6 +57,9 @@ public class OpenCVUtil {
     public static final int BORDER_TRANSPARENT = 5;
 
     public static final int COLOR_RGBA2ABGR = 1000;
+    public static final int COLOR_ARGB2BGRA = 1000;
+    public static final int COLOR_RGBA2BGR = 1001;
+    public static final int COLOR_ARGB2BGR = 1002;
 
     private static final OpenCVUtil instance;
 
@@ -73,12 +76,21 @@ public class OpenCVUtil {
         return instance;
     }
 
+    public static Mat loadImageBGR(String file) {
+        return Imgcodecs.imread(file, Imgcodecs.IMREAD_COLOR);
+    }
+
+    public static Mat loadImageBGR(File file) {
+        return loadImageBGR(file.getAbsolutePath());
+    }
+
     public static Mat loadImage(String file) {
-        return Imgcodecs.imread(file, Imgcodecs.IMREAD_UNCHANGED);
+        Mat src = Imgcodecs.imread(file, Imgcodecs.IMREAD_UNCHANGED);
+        return src;
     }
 
     public static Mat loadImage(File file) {
-        return Imgcodecs.imread(file.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
+        return loadImage(file.getAbsolutePath());
     }
 
     public static Mat loadImage(URL url) throws IOException {
@@ -93,27 +105,34 @@ public class OpenCVUtil {
         return Imgcodecs.imread(file.getAbsolutePath(), Imgcodecs.IMREAD_COLOR);
     }
 
-    public static boolean writeImage(String file, Mat mat) { return Imgcodecs.imwrite(file, mat); }
+    public static boolean writeImage(String file, Mat mat) {
+        return Imgcodecs.imwrite(file, mat);
+    }
 
-    // See https:\/\/riptutorial.com\/opencv\/example\/21963\/converting-an-mat-object-to-an-bufferedimage-object
+    // See https://riptutorial.com/opencv/example/21963/converting-an-mat-object-to-an-bufferedimage-object
     // With enhancements to handle alpha channels
     public static BufferedImage matToBufferedImage(Mat mat) {
         return matToBufferedImage(mat, null);
     }
 
-    public static BufferedImage matToBufferedImage(Mat mat, Boolean rgb) {
+    public static BufferedImage matToBufferedImage(Mat mat, Boolean removeAlpha) {
         int type = BufferedImage.TYPE_BYTE_GRAY;
         if (mat.channels() > 1 && mat.channels() < 4) {
             type = BufferedImage.TYPE_3BYTE_BGR;
         } else if (mat.channels() > 3) {
             type = BufferedImage.TYPE_4BYTE_ABGR;
-        }
-        if (mat.channels() > 3) {
-            if (rgb != null && rgb != false) {
+            Mat wrkMat;
+            if (removeAlpha != null && removeAlpha != false) {
+                wrkMat = new Mat(mat.rows(), mat.cols(), CvType.CV_8UC3);
+                Imgproc.cvtColor(mat, wrkMat, Imgproc.COLOR_BGRA2BGR, 3);
+                mat = wrkMat;
                 type = BufferedImage.TYPE_3BYTE_BGR;
-                mat = cvtColor(mat, COLOR_BGRA2BGR);
             } else {
-                mat = COLOR_RGBA2ABGR(mat);
+                wrkMat = new Mat(mat.rows(), mat.cols(), CvType.CV_8UC4);
+                //Converts from BGRA to ABGR
+                int[] fromTo = {0, 1, 1, 2, 2, 3, 3, 0};
+                Core.mixChannels(Arrays.asList(mat), Arrays.asList(wrkMat), new MatOfInt(fromTo));
+                mat = wrkMat;
             }
         }
         int bufferSize = mat.channels() * mat.cols() * mat.rows();
@@ -122,65 +141,76 @@ public class OpenCVUtil {
         BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), type);
         final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         System.arraycopy(b, 0, targetPixels, 0, b.length);
+
         return image;
     }
 
-    /*
-    public static BufferedImage matToBufferedImageRGB(Mat mat) {
-        if (mat.channels() > 3) {
-            int bufferSize = 3 * mat.cols() * mat.rows();
-            byte[] b = new byte[bufferSize];
-            BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
-            final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
-            System.arraycopy(b, 0, targetPixels, 0, b.length);
-            return image;
-        } else {
-            return matToBufferedImage(mat);
-        }
-    }
-    */
-
-    public static BufferedImage bufferedImageToRGB(BufferedImage img) {
-        if (BufferedImage.TYPE_INT_RGB != img.getType()) {
-            BufferedImage convertedImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
-            convertedImage.getGraphics().drawImage(img, 0, 0, null);
-            convertedImage.getGraphics().dispose();
-            return  convertedImage;
-        } else {
+    public static BufferedImage bufferedImageToBGR(BufferedImage img) {
+        if (BufferedImage.TYPE_3BYTE_BGR == img.getType()) {
             return img;
+        } else {
+            BufferedImage bgr = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+            Graphics2D g = bgr.createGraphics();
+            try {
+                g.setComposite(AlphaComposite.Src);
+                g.drawImage(img, 0, 0, null);
+            } finally {
+                g.dispose();
+            }
+            return bgr;
+        }
+
+    }
+
+    public static void cvtColor(Mat src, Mat dst, int mode) {
+        cvtColor(src, dst, mode);
+    }
+
+    protected static void cvtColor(Mat src, Mat dst, int mode, Integer dstCn) {
+        if (dstCn == null) {
+            dstCn = 0;
+        }
+
+        if (mode == COLOR_ARGB2BGRA) {
+            COLOR_ARGB2BGRA(src, dst);
+        } else if (mode == COLOR_ARGB2BGR) {
+            COLOR_ARGB2BGRA(src, dst);
+        } else if (mode == COLOR_RGBA2BGR) {
+            Imgproc.cvtColor(src, dst, COLOR_RGBA2BGRA, 3);
+        } else {
+            Imgproc.cvtColor(src, dst, mode, dstCn);
         }
     }
 
-    protected static void cvtColor(Mat src, Mat dst, int mode) {
-        if (mode == COLOR_RGBA2ABGR) {
-            COLOR_RGBA2ABGR(src, dst);
-        } else {
-            Imgproc.cvtColor(src, dst, mode);
+    static Mat addTransparencyBRG(Mat inMat) {
+        if (inMat.channels() == 3) {
+            Mat wrkMat = new Mat(inMat.cols(), inMat.rows(), CvType.CV_8UC4);
+            cvtColor(inMat, wrkMat, COLOR_BGR2BGRA);
+            return wrkMat;
         }
+        return null;
     }
 
     static Mat cvtColor(Mat inMat, int mode) {
         Mat wrkMat = new Mat();
-        cvtColor(inMat, wrkMat, mode);
+        cvtColor(inMat, wrkMat, mode, null);
         return wrkMat;
     }
 
-    protected static Mat COLOR_RGBA2ABGR(Mat inMat) {
-        if (inMat.channels() != 4) {
-            return null;
-        }
-        Mat wrkMat = new Mat();
-
-        COLOR_RGBA2ABGR(inMat, wrkMat);
-        return wrkMat;
-    }
-
+    /*
     protected static void COLOR_RGBA2ABGR(Mat src, Mat dst) {
-        List<Mat> rgba = new ArrayList<Mat>();
-        Core.split(src, rgba);
-        List<Mat> abgr = new ArrayList<Mat>();
-        abgr.addAll(Arrays.asList(rgba.get(3), rgba.get(0), rgba.get(1), rgba.get(2)));
-        Core.merge(abgr, dst);
+        int[] fromTo = {0, 3, 1, 2, 2, 1, 3, 0};
+        Core.mixChannels(Arrays.asList(src), Arrays.asList(dst), new MatOfInt(fromTo));
+    }
+    */
+
+    protected static void COLOR_ARGB2BGRA(Mat src, Mat dst) {
+        int[] fromTo = {0, 3, 1, 2, 2, 1, 3, 0};
+        Core.mixChannels(Arrays.asList(src), Arrays.asList(dst), new MatOfInt(fromTo));
+    }
+
+    protected static void COLOR_BGRA2BGR(Mat src, Mat dst) {
+        cvtColor(src, dst, COLOR_BGRA2BGR, 3);
     }
 
     static Mat extractChannel(Mat inMat, int channel) {
@@ -189,19 +219,26 @@ public class OpenCVUtil {
         return wrkMat;
     }
 
-    static Mat addAlpha(Mat inMat, Mat alpha) {
-        if (alpha.type() != CvType.CV_8UC1) {
+    /**
+     * Add an one channel Mat as a alpha channel to a BGR Mat
+     * @param bgr if given as MAt with four channels the last will be dropped
+     * @param a the Mat containing the alpha channel
+     * @return
+     */
+    static Mat addAlphaBGR(Mat bgr, Mat a) {
+        if (a.type() != CvType.CV_8UC1) {
             throw new IllegalStateException("Wrong channel count for alpha - should be one");
         }
 
         Mat wrkMat = new Mat();
-        List<Mat> rgba = new ArrayList<Mat>();
-        Core.split(inMat, rgba);
-        if (inMat.type() == CvType.CV_8UC4) {
-            rgba.remove(rgba.size() - 1);
+        List<Mat> bgra = new ArrayList<Mat>();
+        Core.split(bgr, bgra);
+
+        if (bgr.type() == CvType.CV_8UC4) {
+            bgra.remove(bgra.size() - 1);
         }
-        rgba.add(alpha);
-        Core.merge(rgba, wrkMat);
+        bgra.add(a);
+        Core.merge(bgra, wrkMat);
         return wrkMat;
     }
 
@@ -226,25 +263,60 @@ public class OpenCVUtil {
         return image;
     }
 
-    //TODO: Get this: https://stackoverflow.com/questions/33403526/how-to-match-the-color-models-of-bufferedimage-and-mat/33419984
+    //Inspired by https://stackoverflow.com/questions/33403526/how-to-match-the-color-models-of-bufferedimage-and-mat/33419984
+    public static Mat bufferedImageToMat(BufferedImage img, Boolean removeAlpha) {
+        int curCVtype = CvType.CV_8UC4; //Default type
+        boolean swapAlpha = false;
 
-    // See OpenCVTools.convertBufferedImageToMat (See https://github.com/ihmcrobotics/ihmc-open-robotics-software/blob/09287cf6c061f60f73dd699aad356eedaa0830aa/ihmc-perception/src/main/java/us/ihmc/ihmcPerception/OpenCVTools.java)
-    public static Mat bufferedImageToMat(BufferedImage img, Boolean rgb) {
-        if (img.getType() == BufferedImage.TYPE_INT_ARGB && rgb != null && rgb == true) {
-            Mat m = OpenCVTools.convertBufferedImageToMat(img);
-            return cvtColor(m, COLOR_ARGB);
-        } else if (img.getType() != BufferedImage.TYPE_INT_RGB) {
-            //TODO: get rid og this method an th dependency
-            return OpenCVTools.convertBufferedImageToMat(img);
-        } else {
-            Mat wrkMat = new Mat(img.getHeight(), img.getWidth(), CvType.CV_8UC3);
-            final int[] targetPixels = ((DataBufferInt)img.getRaster().getDataBuffer()).getData();
-            ByteBuffer byteBuffer = ByteBuffer.allocate(targetPixels.length * 4);
-            IntBuffer intBuffer = byteBuffer.asIntBuffer();
-            intBuffer.put(targetPixels);
-            wrkMat.put(0, 0, byteBuffer.array());
-            return wrkMat;
+        switch (img.getType()) {
+            case BufferedImage.TYPE_3BYTE_BGR:
+                curCVtype = CvType.CV_8UC3;
+                break;
+            case BufferedImage.TYPE_BYTE_GRAY:
+            case BufferedImage.TYPE_BYTE_BINARY:
+                curCVtype = CvType.CV_8UC1;
+                break;
+            case BufferedImage.TYPE_INT_BGR:
+            case BufferedImage.TYPE_INT_RGB:
+                curCVtype = CvType.CV_32SC3;
+                break;
+            case BufferedImage.TYPE_INT_ARGB:
+            case BufferedImage.TYPE_INT_ARGB_PRE:
+                curCVtype = CvType.CV_32SC4;
+                swapAlpha = true;
+                break;
+            case BufferedImage.TYPE_USHORT_GRAY:
+                curCVtype = CvType.CV_16UC1;
+                break;
+            case BufferedImage.TYPE_4BYTE_ABGR:
+            case BufferedImage.TYPE_4BYTE_ABGR_PRE:
+                swapAlpha = true;
+                curCVtype = CvType.CV_8UC4;
+                break;
+            default:
+                throw new IllegalStateException("Unsupported BufferedImage type");
         }
+
+        Mat mat = new Mat(img.getHeight(), img.getWidth(), curCVtype);
+        byte[] pixels = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+        mat.put(0, 0, pixels);
+
+        if (swapAlpha) {
+            Mat swappedMat = new Mat(img.getHeight(), img.getWidth(), CvType.CV_8UC4);
+            //Maps to ARGB
+            int[] fromTo = {0, 3, 1, 0, 2, 1, 3, 2};
+
+            Core.mixChannels(Arrays.asList(mat), Arrays.asList(swappedMat), new MatOfInt(fromTo));
+            if (removeAlpha != null && removeAlpha) {
+                mat = cvtColor(swappedMat, Imgproc.COLOR_BGRA2BGR);
+            } else {
+                mat = swappedMat;
+            }
+
+        } else if (img.getType() == BufferedImage.TYPE_INT_RGB) {
+            mat = cvtColor(mat, Imgproc.COLOR_RGB2BGR);
+        }
+        return mat;
     }
 
     public static Mat bufferedImageToMat(BufferedImage img) {

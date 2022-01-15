@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.opencv.core.Mat
+import org.opencv.imgproc.Imgproc
 import org.springframework.util.ResourceUtils
 
 import javax.imageio.ImageIO
@@ -65,19 +66,20 @@ class BackgroundRemoverTest {
     @Tag("bufferedImage")
     void transformBufferedImage(TestInfo testInfo) {
         BufferedImage image = ImageIO.read(files[0])
-        BackgroundRemover br = new BackgroundRemover()
-        BufferedImage result = br.processImage(image)
+        BackgroundRemover br = new BackgroundRemover(image)
+        BufferedImage result = br.processImage()
         def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
+
         ImageIO.write(result, "png", new File(fileName))
         assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
     }
 
     @Test
     @Tag("bufferedImageRGB")
-    void transformBufferedImageRGB(TestInfo testInfo) {
-        BufferedImage image = OpenCVUtil.bufferedImageToRGB(ImageIO.read(files[0]))
-        BackgroundRemover br = new BackgroundRemover()
-        BufferedImage result = br.processImage(image)
+    void transformBufferedImageBGR(TestInfo testInfo) {
+        BufferedImage image = ImageIO.read(files[0])
+        BackgroundRemover br = new BackgroundRemover(image)
+        BufferedImage result = br.processImage()
         def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
         ImageIO.write(result, "png", new File(fileName))
         assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
@@ -87,12 +89,12 @@ class BackgroundRemoverTest {
     @Tag("withAlpha")
     void withAlpha(TestInfo testInfo) {
         Mat inMat = OpenCVUtil.loadImage(files[0])
-        Mat alphaMat = OpenCVUtil.cvtColor(inMat, OpenCVUtil.COLOR_RGB2RGBA)
+        Mat alphaMat = OpenCVUtil.cvtColor(inMat, Imgproc.COLOR_RGB2RGBA)
         BufferedImage biA = OpenCVUtil.matToBufferedImage(alphaMat, true)
         BackgroundRemover br1 = new BackgroundRemover(biA)
         BufferedImage result1 = br1.processImage()
-        BackgroundRemover br2 = new BackgroundRemover()
-        BufferedImage result2 = br2.processImage(biA)
+        BackgroundRemover br2 = new BackgroundRemover(biA)
+        BufferedImage result2 = br2.processImage()
         def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
         ImageIO.write(result2, "png", new File(fileName))
     }
