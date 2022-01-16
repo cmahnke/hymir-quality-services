@@ -102,6 +102,10 @@ public class OpenCVUtil {
         return Imgcodecs.imdecode(new MatOfByte(content), mode);
     }
 
+    public static Mat loadImage(InputStream is) throws IOException {
+        return loadImage(is, Imgcodecs.IMREAD_UNCHANGED);
+    }
+
     /*
     public static Mat loadImage(URL url) throws IOException {
         return bufferedImageToMat(ImageIO.read(url));

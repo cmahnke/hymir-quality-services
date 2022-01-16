@@ -27,13 +27,12 @@ import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Point
 import org.opencv.core.Scalar
-import org.opencv.highgui.HighGui
 
 import java.awt.image.BufferedImage
 
 @TypeChecked
 @CompileStatic
-class BackgroundRemover implements AutoCloseable {
+class BackgroundRemover extends AbstractImageManipulator implements AutoCloseable {
 
     protected Point INITIAL = new Point(1d, 1d)
     protected Scalar FILL = new Scalar(255)
@@ -42,10 +41,6 @@ class BackgroundRemover implements AutoCloseable {
 
     static {
         OpenCV.loadShared()
-    }
-
-    BackgroundRemover() {
-
     }
 
     BackgroundRemover(Mat mat) {
@@ -57,13 +52,17 @@ class BackgroundRemover implements AutoCloseable {
         this.img = OpenCVUtil.bufferedImageToMat(img, true)
     }
 
-    BackgroundRemover(String file) {
-        this(OpenCVUtil.loadImage(file))
+    BackgroundRemover(InputStream is) {
+        this(OpenCVUtil.loadImage(is))
     }
 
-    BufferedImage processImage() {
+    BufferedImage processBufferedImage() {
         BufferedImage result = OpenCVUtil.matToBufferedImage(this.process())
         return result
+    }
+
+    Mat processMat() {
+        return this.process()
     }
 
     protected Mat process() {

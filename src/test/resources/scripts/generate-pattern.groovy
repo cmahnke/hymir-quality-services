@@ -1,3 +1,21 @@
+/**
+ * IIIF Image Services
+ * Copyright (C) 2022  Christian Mahnke
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 @Grab(group = 'org.openpnp', module = 'opencv', version = '4.5.1-2')
 
 import nu.pattern.OpenCV
@@ -15,6 +33,11 @@ def fieldWidth = 100
 OpenCV.loadShared();
 
 def colors = Arrays.asList(new Scalar(127, 127, 127), new Scalar(0, 0, 255), new Scalar(0, 255, 0), new Scalar(255, 0, 0), new Scalar(255, 255, 0), new Scalar(255, 0, 255), new Scalar(0, 255, 255), new Scalar(255, 255, 255), new Scalar(0, 0, 0))
+
+//Check if output directories exist
+if (!new File(fileName).getParentFile().exists()) {
+    new File(fileName).getParentFile().mkdirs()
+}
 
 List<Mat> fields = []
 
@@ -34,7 +57,7 @@ for (i = 0; i < Math.sqrt(fields.size()); i++) {
 
 Mat testpattern = new Mat()
 Core.vconcat(rows, testpattern)
-//log.info("Resulting file will be " + new File(fileName).getAbsolutePath())
+log.info("Resulting file will be " + new File(fileName).getAbsolutePath())
 
 Imgcodecs.imwrite(fileName, testpattern)
 
@@ -66,4 +89,5 @@ Core.merge(bgr, testpattern);
 //HighGui.imshow("test", mask)
 //HighGui.waitKey()
 
+log.info("Resulting file will be " + new File(fileNameAlpha).getAbsolutePath())
 Imgcodecs.imwrite(fileNameAlpha, testpattern)

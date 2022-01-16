@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue
 @Slf4j
 class BackgroundRemoverTest {
 
-    Map<Integer, File> files = new HashMap<Integer, File>()
+    static Map<Integer, File> files = new HashMap<Integer, File>()
 
     @BeforeEach
     void setup() {
@@ -67,7 +67,7 @@ class BackgroundRemoverTest {
     void transformBufferedImage(TestInfo testInfo) {
         BufferedImage image = ImageIO.read(files[0])
         BackgroundRemover br = new BackgroundRemover(image)
-        BufferedImage result = br.processImage()
+        BufferedImage result = br.processBufferedImage()
         def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
 
         ImageIO.write(result, "png", new File(fileName))
@@ -79,7 +79,7 @@ class BackgroundRemoverTest {
     void transformBufferedImageBGR(TestInfo testInfo) {
         BufferedImage image = ImageIO.read(files[0])
         BackgroundRemover br = new BackgroundRemover(image)
-        BufferedImage result = br.processImage()
+        BufferedImage result = br.processBufferedImage()
         def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
         ImageIO.write(result, "png", new File(fileName))
         assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
@@ -92,9 +92,9 @@ class BackgroundRemoverTest {
         Mat alphaMat = OpenCVUtil.cvtColor(inMat, Imgproc.COLOR_RGB2RGBA)
         BufferedImage biA = OpenCVUtil.matToBufferedImage(alphaMat, true)
         BackgroundRemover br1 = new BackgroundRemover(biA)
-        BufferedImage result1 = br1.processImage()
+        BufferedImage result1 = br1.processBufferedImage()
         BackgroundRemover br2 = new BackgroundRemover(biA)
-        BufferedImage result2 = br2.processImage()
+        BufferedImage result2 = br2.processBufferedImage()
         def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
         ImageIO.write(result2, "png", new File(fileName))
     }

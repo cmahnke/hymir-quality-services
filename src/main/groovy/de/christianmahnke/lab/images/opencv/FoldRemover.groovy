@@ -35,7 +35,7 @@ import static java.lang.Math.*
 @TypeChecked
 @CompileStatic
 @Slf4j
-class FoldRemover implements AutoCloseable {
+class FoldRemover extends AbstractImageManipulator implements AutoCloseable {
     protected boolean keepSize = false
     protected boolean fitBox = true
 
@@ -50,8 +50,8 @@ class FoldRemover implements AutoCloseable {
     protected Mat img = null
     protected Side side
     protected Page page
-    // TODO: Make the patten configurable
-    static List<Pattern> identifierPatterns = [~/.*.[^\d](?<identifier>\d{5,8}).*?$/]
+    // TODO: Make the pattern configurable
+    protected static List<Pattern> identifierPatterns = [~/.*.[^\d](?<identifier>\d{5,8}).*?$/]
     static {
         OpenCV.loadShared()
     }
@@ -69,14 +69,28 @@ class FoldRemover implements AutoCloseable {
         this(OpenCVUtil.bufferedImageToMat(img), sideHint)
     }
 
-    BufferedImage processImage() {
+    FoldRemover(InputStream is, String sideHint) {
+        this(OpenCVUtil.loadImage(is), sideHint)
+    }
+
+    BufferedImage processBufferedImage() {
         try {
             return OpenCVUtil.matToBufferedImage(this.process())
-        } catch (RecognitionException | org.opencv.core.CvException e) {
-            log.warn("""Got exception ${e.getMessage()}, returning input image""")
+        } catch (RecognitionException | CvException e) {
+            log.warn("Got exception ${e.getMessage()}, returning input image")
             BufferedImage input = OpenCVUtil.matToBufferedImage(this.img)
             input.setRGB(1, 1, Color.RED.getRGB())
             return input
+        }
+    }
+
+    Mat processMat() {
+        try {
+            return this.process()
+        } catch (RecognitionException | CvException e) {
+            log.warn("Got exception ${e.getMessage()}, returning input image")
+            this.img.submat(1, 1, 1, 1).setTo(new Scalar(255, 0, 0))
+            return this.img
         }
     }
 
@@ -169,7 +183,7 @@ class FoldRemover implements AutoCloseable {
 
         @Override
         String toString() {
-            return """${this.class.getSimpleName()} -> x1: ${this.x1}, y1: ${this.y1}, x2: ${this.x2}, y2: ${this.y2}, avarage x:${this.averageX}, distance: ${this.distance}, angle: ${this.angleDeg}, color: ${this.color}, width: ${this.width}""".toString()
+            return "${this.class.getSimpleName()} -> x1: ${this.x1}, y1: ${this.y1}, x2: ${this.x2}, y2: ${this.y2}, avarage x:${this.averageX}, distance: ${this.distance}, angle: ${this.angleDeg}, color: ${this.color}, width: ${this.width}".toString()
         }
 
         Tuple2<Point, Point> getLine() {
@@ -328,7 +342,7 @@ class FoldRemover implements AutoCloseable {
                 wrkMat = CV.copy(this.img)
             }
             // Edge detection
-            log.trace("""Finding Lines with at least ${minLineLength} px, maximum allowed gap is ${maxLineGap}""")
+            log.trace("Finding Lines with at least ${minLineLength} px, maximum allowed gap is ${maxLineGap}")
             wrkMat = CV.Canny(wrkMat, 30, 120, 3)
             def lines = CV.HoughLinesP(wrkMat, 5, (Math.PI / 180) as Double, 50, minLineLength, maxLineGap)
             this.addAll(lines)
@@ -363,9 +377,9 @@ class FoldRemover implements AutoCloseable {
             if (this.lines.size() == 0) {
                 throw new RecognitionException("No lines found!")
             }
-            log.trace("""Num of lines before filtering is ${this.lines.size()}""")
+            log.trace("Num of lines before filtering is ${this.lines.size()}")
             this.lines = filterDeg(this.lines)
-            log.trace("""Num of lines after filtering is ${this.lines.size()}""")
+            log.trace("Num of lines after filtering is ${this.lines.size()}")
             def foldLines
             if (this.side == Side.VERSO) {
                 //Fold right
@@ -382,12 +396,12 @@ class FoldRemover implements AutoCloseable {
             } else {
                 foldLines.sort({ Line line -> line.distance })
             }
-            log.trace("""Candidates for ${this.side} fold lines ${foldLines.size()}""")
+            log.trace("Candidates for ${this.side} fold lines ${foldLines.size()}")
             if (foldLines.size() < 1) {
                 throw new RecognitionException("Cant find a possible cut line")
             }
             this.cut = new Cut(foldLines.get(0), this.img.size())
-            log.trace("""Picked ${this.cut} as cut line""")
+            log.trace("Picked ${this.cut} as cut line")
         }
 
         def calculateBox() {
@@ -491,7 +505,7 @@ class FoldRemover implements AutoCloseable {
 
         Mat rotate(boolean keepSize = false) {
             if (this.side == Side.NONE) {
-                log.trace("""Side is set to ${this.side}, returning unaltered image.""")
+                log.trace("Side is set to ${this.side}, returning unaltered image.")
                 return this.img
             }
             if (this.rotatedBox == null) {
@@ -580,7 +594,7 @@ class FoldRemover implements AutoCloseable {
                 log.debug("Drawing line ${i} from ${p1} to ${p2}")
                 CV.line(inMat, p1, p2, color, width)
             }
-            log.debug("""Drawing line from ${box.get(3).x},${box.get(3).y} to ${box.get(0).x}, ${box.get(0).y}""")
+            log.debug("Drawing line from ${box.get(3).x},${box.get(3).y} to ${box.get(0).x}, ${box.get(0).y}")
             CV.line(inMat, new Point(box.get(3).x, box.get(3).y), new Point(box.get(0).x, box.get(0).y), color, width)
         }
 

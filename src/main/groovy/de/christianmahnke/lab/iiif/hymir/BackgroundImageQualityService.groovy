@@ -18,21 +18,24 @@
 package de.christianmahnke.lab.iiif.hymir
 
 import de.christianmahnke.lab.images.opencv.BackgroundRemover
+import de.christianmahnke.lab.images.opencv.imageio.OpenCVImageReader
 import de.digitalcollections.iiif.hymir.image.business.api.ImageQualityService
 import de.digitalcollections.iiif.model.image.ImageApiProfile
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
+import org.opencv.core.Mat
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
+import javax.imageio.ImageReader
 import java.awt.image.BufferedImage
 
 @Slf4j
 @Service
 @TypeChecked
 @CompileStatic
-class BackgroundImageQualityService implements ImageQualityService {
+class BackgroundImageQualityService implements ImageQualityService.Source {
     String identifier
 
     @Value('${custom.image.quality.background.enabled:true}')
@@ -63,11 +66,18 @@ class BackgroundImageQualityService implements ImageQualityService {
     BufferedImage processImage(String identifier, BufferedImage img) {
         log.info("Processing '${this.identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
         BackgroundRemover br = new BackgroundRemover(img)
-        return br.processImage()
+        return br.processBufferedImage()
     }
 
     @Override
     public boolean hasAlpha() {
         return true;
+    }
+
+    @Override
+    ImageReader processStream(String identifier, InputStream inputStream) {
+        BackgroundRemover br = new BackgroundRemover(inputStream)
+        Mat img = br.processMat()
+        return OpenCVImageReader.getInstance(img)
     }
 }

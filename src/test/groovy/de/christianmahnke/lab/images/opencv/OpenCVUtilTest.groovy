@@ -46,7 +46,6 @@ class OpenCVUtilTest {
         return "output-${marker}-${FilenameUtils.getBaseName(file.getAbsolutePath())}.png"
     }
 
-
     @BeforeEach
     void setup() {
         this.patterns = Arrays.asList(ResourceUtils.getFile("classpath:images/pattern.png"), ResourceUtils.getFile("classpath:images/patternAlpha.png"))

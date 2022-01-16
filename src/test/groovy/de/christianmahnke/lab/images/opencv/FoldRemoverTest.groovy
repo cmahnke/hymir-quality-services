@@ -19,7 +19,6 @@ package de.christianmahnke.lab.images.opencv
 
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
-import org.junit.Ignore
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -35,10 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue
 @TypeChecked
 @Slf4j
 class FoldRemoverTest {
-    Map<Integer, File> files = new HashMap<Integer, File>()
-    int count = 7
+    static Map<Integer, File> files = new HashMap<Integer, File>()
+    static int count = 7
 
-    protected transformSingleMat (Integer k, File v, String suffix = "") {
+    static transformSingleMat (Integer k, File v, String suffix = "") {
         BufferedImage image = ImageIO.read(v)
         Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
         FoldRemover fr = new FoldRemover(cvImage, FoldRemover.guessSide(v.toString()))
@@ -87,9 +86,9 @@ class FoldRemoverTest {
         files.forEach (k, v) -> {
             log.info("Transforming ${v} using Mat and checking if sizes match")
             Mat image = OpenCVUtil.loadImage(v)
-            FoldRemover fr = new FoldRemover(image, FoldRemover.guessSide(v.toString()))
-            fr.setKeepSize(true)
             String side = FoldRemover.guessSide(v.toString())
+            FoldRemover fr = new FoldRemover(image, side)
+            fr.setKeepSize(true)
             Mat result = fr.process()
             def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-${k}.png"
             assertTrue(image.size().equals(result.size()))
@@ -113,7 +112,7 @@ class FoldRemoverTest {
             Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
             String side = FoldRemover.guessSide(v.toString())
             FoldRemover fr = new FoldRemover(cvImage, side)
-            BufferedImage result = fr.processImage()
+            BufferedImage result = fr.processBufferedImage()
             def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-${k.toString()}.png"
             ImageIO.write(result, "png", new File(fileName))
         }

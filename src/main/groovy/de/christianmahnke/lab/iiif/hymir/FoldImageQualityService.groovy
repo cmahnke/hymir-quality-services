@@ -19,6 +19,7 @@ package de.christianmahnke.lab.iiif.hymir
 
 import de.christianmahnke.lab.images.opencv.FoldRemover
 import de.christianmahnke.lab.images.opencv.OpenCVUtil
+import de.christianmahnke.lab.images.opencv.imageio.OpenCVImageReader
 import de.digitalcollections.iiif.hymir.image.business.api.ImageQualityService
 import de.digitalcollections.iiif.model.image.ImageApiProfile
 import groovy.transform.CompileStatic
@@ -28,13 +29,14 @@ import org.opencv.core.Mat
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
+import javax.imageio.ImageReader
 import java.awt.image.BufferedImage
 
 @Slf4j
 @Service
 @TypeChecked
 @CompileStatic
-class FoldImageQualityService implements ImageQualityService {
+class FoldImageQualityService implements ImageQualityService.Source {
 
     @Value('${custom.image.quality.fold.enabled:true}')
     private boolean enabled
@@ -73,11 +75,26 @@ class FoldImageQualityService implements ImageQualityService {
         FoldRemover fr = new FoldRemover(img, side)
         fr.setKeepSize(true);
         log.info("Processing '${identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
-        return fr.processImage()
+        return fr.processBufferedImage()
     }
 
     @Override
     public boolean hasAlpha() {
         return false;
+    }
+
+    @Override
+    ImageReader processStream(String identifier, InputStream inputStream) {
+        String side = null
+        if (identifier != null) {
+            side = FoldRemover.guessSide(identifier)
+        }
+        if (side == null) {
+            side = "NONE"
+        }
+        FoldRemover fr = new FoldRemover(inputStream, side)
+        fr.setKeepSize(true);
+        Mat img = fr.processMat()
+        return OpenCVImageReader.getInstance(img)
     }
 }
