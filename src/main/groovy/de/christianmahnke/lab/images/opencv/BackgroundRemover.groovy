@@ -61,10 +61,6 @@ class BackgroundRemover implements AutoCloseable {
         this(OpenCVUtil.loadImage(file))
     }
 
-    BackgroundRemover(URL url) {
-        this(OpenCVUtil.loadImage(url))
-    }
-
     BufferedImage processImage() {
         BufferedImage result = OpenCVUtil.matToBufferedImage(this.process())
         return result
