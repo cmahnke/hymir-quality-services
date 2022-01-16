@@ -156,6 +156,19 @@ class OpenCVUtilTest {
         }
     }
 
+    @Test
+    void loadInputStream() {
+        for (pattern in this.patterns) {
+            InputStream is = new FileInputStream(pattern)
+            Mat image = OpenCVUtil.loadImage(is, null)
+            assertNotNull(image)
+            BufferedImage bi = OpenCVUtil.matToBufferedImage(image)
+            def fileName = getOutputFileName(pattern, "read-inputstream")
+            ImageIO.write(bi, "png", new File(fileName))
+            assertTrue(new ImageChecker(pattern, new File(fileName)).compare())
+        }
+    }
+
     public static void display(BufferedImage image) {
         JFrame frame = new JFrame();
         frame.setTitle("stained_image");

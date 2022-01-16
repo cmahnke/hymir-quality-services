@@ -24,12 +24,12 @@ import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +54,7 @@ public class OpenCVUtil {
     public static final int BORDER_REPLICATE = 1;
     public static final int BORDER_TRANSPARENT = 5;
 
-    public static final int COLOR_RGBA2ABGR = 1000;
+    //public static final int COLOR_RGBA2ABGR = 1000;
     public static final int COLOR_ARGB2BGRA = 1000;
     public static final int COLOR_RGBA2BGR = 1001;
     public static final int COLOR_ARGB2BGR = 1002;
@@ -74,16 +74,19 @@ public class OpenCVUtil {
         return instance;
     }
 
-    public static Mat loadImageBGR(String file) {
-        return Imgcodecs.imread(file, Imgcodecs.IMREAD_COLOR);
+    public static Mat loadImage(String file, Integer mode) {
+        if (mode == null) {
+            mode = Imgcodecs.IMREAD_COLOR;
+        }
+        return Imgcodecs.imread(file, mode);
     }
 
-    public static Mat loadImageBGR(File file) {
-        return loadImageBGR(file.getAbsolutePath());
+    public static Mat loadImage(File file, Integer mode) {
+        return loadImage(file.getAbsolutePath(), mode);
     }
 
     public static Mat loadImage(String file) {
-        Mat src = Imgcodecs.imread(file, Imgcodecs.IMREAD_UNCHANGED);
+        Mat src = loadImage(file, Imgcodecs.IMREAD_UNCHANGED);
         return src;
     }
 
@@ -91,6 +94,15 @@ public class OpenCVUtil {
         return loadImage(file.getAbsolutePath());
     }
 
+    public static Mat loadImage(InputStream is, Integer mode) throws IOException {
+        if (mode == null) {
+            mode = Imgcodecs.IMREAD_UNCHANGED;
+        }
+        byte[] content = is.readAllBytes();
+        return Imgcodecs.imdecode(new MatOfByte(content), mode);
+    }
+
+    /*
     public static Mat loadImage(URL url) throws IOException {
         return bufferedImageToMat(ImageIO.read(url));
     }
@@ -102,7 +114,7 @@ public class OpenCVUtil {
     public static Mat loadImageC(File file) {
         return Imgcodecs.imread(file.getAbsolutePath(), Imgcodecs.IMREAD_COLOR);
     }
-
+*/
     public static boolean writeImage(String file, Mat mat) {
         return Imgcodecs.imwrite(file, mat);
     }
