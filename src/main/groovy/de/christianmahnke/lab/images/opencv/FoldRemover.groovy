@@ -19,15 +19,11 @@ package de.christianmahnke.lab.images.opencv
 
 import com.google.common.base.Enums
 import de.christianmahnke.lab.images.opencv.OpenCVUtil as CV
-import de.christianmahnke.lab.images.opencv.OpenCVUtil.RGBA
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import nu.pattern.OpenCV
-import org.opencv.core.Mat
-import org.opencv.core.Point
-import org.opencv.core.Rect
-import org.opencv.core.Size
+import org.opencv.core.*
 
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -41,6 +37,7 @@ import static java.lang.Math.*
 @Slf4j
 class FoldRemover implements AutoCloseable {
     protected boolean keepSize = false
+    protected boolean fitBox = true
 
     // Tweaks (These are just te defaults for every operation)
     static double minLineLengthDiv = 1.2
@@ -72,20 +69,6 @@ class FoldRemover implements AutoCloseable {
         this(OpenCVUtil.bufferedImageToMat(img), sideHint)
     }
 
-    FoldRemover(String file, String sideHint) {
-        this(OpenCVUtil.loadImage(file), sideHint)
-    }
-
-    FoldRemover(URL url, String sideHint) {
-        this(OpenCVUtil.loadImage(url), sideHint)
-    }
-
-    BufferedImage processImage(BufferedImage img, String side) {
-        this.img = OpenCVUtil.bufferedImageToMat(img)
-        this.side = Side.valueOf(side.toUpperCase())
-        return processImage()
-    }
-
     BufferedImage processImage() {
         try {
             return OpenCVUtil.matToBufferedImage(this.process())
@@ -99,26 +82,11 @@ class FoldRemover implements AutoCloseable {
 
     protected Mat process() {
         this.page = new Page(this.img, this.side)
-        Mat rotated = this.page.rotate()
+        Mat rotated = this.page.rotate(keepSize)
 
-        if (keepSize) {
-            if (this.img.size().equals(rotated.size())) {
-                return rotated
-            }
-            int width = (int) rotated.size().width
-            int height = (int) rotated.size().height
-            int y = ((int) floor((this.img.size().height - rotated.size().height) / 2))
-            int x
-            if (this.side == Side.VERSO) {
-                x = 0
-            } else {
-                x = (int) (this.img.size().width - rotated.size().width)
-            }
-            Mat submat = this.img.submat(new Rect(x, y, width, height));
-            rotated.copyTo(submat)
-            return this.img
-        }
-
+        // TODO: Check when it's safe to clean up
+        //this.page.release()
+        //this.img.release()
         return rotated
     }
 
@@ -128,6 +96,14 @@ class FoldRemover implements AutoCloseable {
 
     public boolean getKeepSize() {
         return this.keepSize
+    }
+
+    public setFitBox(boolean fitBox) {
+        this.fitBox = fitBox
+    }
+
+    public boolean getFitBox() {
+        return this.fitBox
     }
 
     protected Page getPage() {
@@ -161,7 +137,7 @@ class FoldRemover implements AutoCloseable {
         double angleDeg
         double angleRad
         int width = 1
-        CV.RGBA color = new CV.RGBA(0, 0, 0, 0)
+        Scalar color = new Scalar(0, 0, 0, 0)
         protected Size size
         double averageX
         double score
@@ -231,8 +207,8 @@ class FoldRemover implements AutoCloseable {
         }
 
         static Point calculatePoint(Point point, double angleRad, double distance) {
-            //return new Point(point.x - distance * cos(angleRad), point.y - distance * sin(angleRad))
-            return new Point((point.x - distance * cos(angleRad)).toInteger(), (point.y - distance * sin(angleRad)).toInteger())
+            return new Point(point.x - distance * cos(angleRad), point.y - distance * sin(angleRad))
+            //return new Point((point.x - distance * cos(angleRad)).toInteger(), (point.y - distance * sin(angleRad)).toInteger())
         }
 
         Point p1() {
@@ -287,7 +263,7 @@ class FoldRemover implements AutoCloseable {
             this.h = (int) this.size.height
             this.w = (int) this.size.width
 
-            this.color = new CV.RGBA(255, 0, 0, 255)
+            this.color = new Scalar(255, 0, 0, 255)
             this.width = 3
 
             def distanceTop = calcPointDinstance(new Point(this.x2, 0), this.p2())
@@ -322,12 +298,11 @@ class FoldRemover implements AutoCloseable {
         Cut cut
         Tuple<Point> box
         List<Point> rotatedBox
-        boolean fitBox = true
         // Debug
         int boxWidth = 3
         int rotatedBoxWidth = 5
-        CV.RGBA rotatedBoxColor = new CV.RGBA(0, 127, 127, 255)
-        CV.RGBA boxColor = new CV.RGBA(0, 255, 255, 255)
+        Scalar rotatedBoxColor = new Scalar(0, 127, 127, 255)
+        Scalar boxColor = new Scalar(0, 255, 255, 255)
 
         Page(Mat img, Side side) {
             this.img = img
@@ -381,6 +356,7 @@ class FoldRemover implements AutoCloseable {
         }
 
         def findCut(double xWheight = FoldRemover.xWheight, double xWindow = FoldRemover.xWindow) {
+            //TODO: also take the angle into account, maybe by by detecting the upper and lower border first
             if (this.lines == null) {
                 this.findLines()
             }
@@ -421,9 +397,17 @@ class FoldRemover implements AutoCloseable {
 
             double verticalAngle = this.cut.angleRad + toRadians(90)
             log.trace("Calculating box for side ${side}, angle '${cut.angleDeg}' (${this.cut.top()}, ${this.cut.bottom()})")
-            if (this.fitBox == false) {
-                def pTop = Line.calculatePoint(new Point(this.cut.top().x, this.cut.top().y), verticalAngle, w)
-                def pBottom = Line.calculatePoint(new Point(this.cut.bottom().x, this.cut.bottom().y), verticalAngle, w)
+            if (FoldRemover.this.fitBox == false) {
+                throw new IllegalStateException("This isn't finished!")
+                int edgeW
+
+                if (side == Side.RECTO) {
+                    edgeW = (int) (this.w - this.cut.top().x)
+                } else {
+                    edgeW = (int) (this.w - (this.w - this.cut.bottom().x))
+                }
+                def pTop = Line.calculatePoint(new Point(this.cut.top().x, this.cut.top().y), verticalAngle, edgeW)
+                def pBottom = Line.calculatePoint(new Point(this.cut.bottom().x, this.cut.bottom().y), verticalAngle, edgeW)
                 this.box = new Tuple(new Point(this.cut.top().x, this.cut.top().y), pTop, pBottom, new Point(this.cut.bottom().x, this.cut.bottom().y))
             } else {
                 def Point tl, tr, bl, br
@@ -505,7 +489,7 @@ class FoldRemover implements AutoCloseable {
             return result
         }
 
-        Mat rotate() {
+        Mat rotate(boolean keepSize = false) {
             if (this.side == Side.NONE) {
                 log.trace("""Side is set to ${this.side}, returning unaltered image.""")
                 return this.img
@@ -516,12 +500,34 @@ class FoldRemover implements AutoCloseable {
             Mat matrix = CV.getRotationMatrix2D(this.center, this.cut.angleDeg + 90, null)
             def (Point p1, Point p2) = [this.rotatedBox.get(0), this.rotatedBox.get(3)]
             log.debug("extracting from top left ${p1.toString()} lo lower right ${p2.toString()} (of ${this.w}x${this.h})")
+            Rect cropRect = new Rect(p1.x, p1.y, (p2.x - p1.x), (p2.y - p1.y))
 
+            if (keepSize) {
+                def translateX
+                if (side == Side.RECTO) {
+                    translateX = -p1.x
+                } else {
+                    //x = (int) (this.img.size().width - cropRect.size().width)
+                    translateX = this.w - p2.x
+                }
+                def translateY = (this.img.size().height - cropRect.size().height) / 2
+                double newX = matrix.get(0, 2)[0] + translateX
+                double newY = matrix.get(0, 2)[0] + translateY
+                matrix.put(0, 2, newX)
+                matrix.put(1, 2, newY)
+
+                log.trace("Setting translation parameter to x ${newX}, y ${newY} (adjustmets x ${translateX}, y ${translateY}) to keep the size")
+            }
+
+            log.debug("Rotating by ${this.cut.angleDeg + 90}")
             Mat rotated = CV.warpAffine(this.img, matrix, this.img.size(), CV.INTER_CUBIC, CV.BORDER_REPLICATE)
 
-            Rect crop = new Rect(p1.x, p1.y, (p2.x - p1.x), (p2.y - p1.y))
-            //log.trace("Croping at ${crop}")
-            return rotated.submat(crop)
+            if (keepSize) {
+                return rotated.clone()
+            }
+
+            log.trace("Croping at ${cropRect}")
+            return new Mat(rotated, cropRect)
         }
 
         boolean debugColorize() {
@@ -539,7 +545,7 @@ class FoldRemover implements AutoCloseable {
                 def leftLines = this.lines.findAll { Line line -> line.x1 < this.w / 2 }
                 leftLines.sort({ Line line -> line.distance })
                 for (line in leftLines) {
-                    line.color = new CV.RGBA(0, 0, color, color)
+                    line.color = new Scalar(0, 0, color, color)
                     color = color - 20
                     if (color < 63) {
                         color = 63
@@ -551,7 +557,7 @@ class FoldRemover implements AutoCloseable {
                 def rightLines = this.lines.findAll { Line line -> line.x1 > this.w / 2 }
                 rightLines.sort({ Line line -> line.distance })
                 for (line in rightLines) {
-                    line.color = new CV.RGBA(0, color, 0, color)
+                    line.color = new Scalar(0, color, 0, color)
                     color = color - 20
                     if (color < 63) {
                         color = 63
@@ -563,7 +569,7 @@ class FoldRemover implements AutoCloseable {
             return true
         }
 
-        protected static drawBox(Mat inMat, List<Point> box, RGBA color, int width) {
+        protected static drawBox(Mat inMat, List<Point> box, Scalar color, int width) {
             if (box == null || box.size() < 1) {
                 return
             }
@@ -583,8 +589,11 @@ class FoldRemover implements AutoCloseable {
             if (this.box == null) {
                 calculateBox()
             }
+            if (inMat == this.img) {
+                throw new IllegalStateException("Don't use the provided Mat for debugging since this can alter the results, use Mat.clone()")
+            }
             if (inMat.channels() < 4) {
-                CV.cvtColor(inMat, inMat, CV.COLOR_BGR2BGRA)
+                inMat = CV.removeAlpha(inMat)
             }
 
             drawBox(inMat, this.box, this.boxColor, this.boxWidth)
@@ -595,8 +604,14 @@ class FoldRemover implements AutoCloseable {
             }
 
             this.cut.width = 2
-            this.cut.color = new OpenCVUtil.RGBA(255, 0, 0, 127)
+            this.cut.color = new Scalar(255, 0, 0, 127)
             this.cut.debugDraw(inMat)
+        }
+
+        void release() {
+            if (this.img != null) {
+                this.img.release()
+            }
         }
     }
 
@@ -631,6 +646,9 @@ class FoldRemover implements AutoCloseable {
     void close() {
         if (this.img != null) {
             this.img.release()
+        }
+        if (this.page != null) {
+            this.page.release()
         }
     }
 }

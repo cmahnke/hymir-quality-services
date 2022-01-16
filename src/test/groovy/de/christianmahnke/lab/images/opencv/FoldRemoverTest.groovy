@@ -19,6 +19,7 @@ package de.christianmahnke.lab.images.opencv
 
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
+import org.junit.Ignore
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -72,6 +73,7 @@ class FoldRemoverTest {
     }
 
     @Test
+    @Tag('transform-single')
     void testTransformMat(TestInfo testInfo) {
         files.forEach (k, v) -> {
             log.info("Transforming ${v} using Mat")
@@ -111,11 +113,30 @@ class FoldRemoverTest {
             Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
             String side = FoldRemover.guessSide(v.toString())
             FoldRemover fr = new FoldRemover(cvImage, side)
-            BufferedImage result = fr.processImage(image, side)
-            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-" + k.toString() + ".png"
+            BufferedImage result = fr.processImage()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-${k.toString()}.png"
             ImageIO.write(result, "png", new File(fileName))
         }
     }
+
+    /*
+    @Test
+    @Ignore
+    @Tag('no-fit-box')
+    void testNoBoxFitting(TestInfo testInfo) {
+        files.forEach (k, v) -> {
+            BufferedImage image = ImageIO.read(v)
+            Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
+            String side = FoldRemover.guessSide(v.toString())
+            FoldRemover fr = new FoldRemover(cvImage, side)
+            fr.setFitBox(false)
+            BufferedImage result = fr.processImage()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-${k.toString()}.png"
+            ImageIO.write(result, "png", new File(fileName))
+        }
+    }
+    */
+
     @Test
     @Tag('debug-draw')
     void testDebug(TestInfo testInfo) {
@@ -132,7 +153,7 @@ class FoldRemoverTest {
                 Mat debugMat = OpenCVUtil.loadImage(v)
                 p.calculateRotatedBox()
                 p.debugDraw(debugMat)
-                def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-"+  k.toString()  + ".png"
+                def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${side}-${k.toString()}.png"
                 log.debug("Writing image ${fileName}")
                 OpenCVUtil.saveImage(debugMat, fileName)
                 try {

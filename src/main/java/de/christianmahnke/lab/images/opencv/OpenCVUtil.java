@@ -18,11 +18,9 @@
 package de.christianmahnke.lab.images.opencv;
 
 import com.google.common.primitives.Doubles;
-import groovy.lang.Tuple;
 import nu.pattern.OpenCV;
 import org.opencv.core.Point;
 import org.opencv.core.*;
-import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -33,11 +31,11 @@ import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+//TODO: There might be some memory leaks in here since the used OpenCV Mat's aren't cleared
 public class OpenCVUtil {
     // See https://docs.opencv.org/4.x/javadoc/constant-values.html
     public static final int THRESH_BINARY_INV = 1;
@@ -145,7 +143,7 @@ public class OpenCVUtil {
         return image;
     }
 
-    public static BufferedImage bufferedImageToBGR(BufferedImage img) {
+    protected static BufferedImage bufferedImageToBGR(BufferedImage img) {
         if (BufferedImage.TYPE_3BYTE_BGR == img.getType()) {
             return img;
         } else {
@@ -160,6 +158,12 @@ public class OpenCVUtil {
             return bgr;
         }
 
+    }
+
+    static Mat removeAlpha(Mat img) {
+        Mat wrkMat = new Mat(img.rows(), img.cols(), CvType.CV_8UC3);
+        Imgproc.cvtColor(img, wrkMat, Imgproc.COLOR_BGRA2BGR, 3);
+        return wrkMat;
     }
 
     public static void cvtColor(Mat src, Mat dst, int mode) {
@@ -221,8 +225,9 @@ public class OpenCVUtil {
 
     /**
      * Add an one channel Mat as a alpha channel to a BGR Mat
+     *
      * @param bgr if given as MAt with four channels the last will be dropped
-     * @param a the Mat containing the alpha channel
+     * @param a   the Mat containing the alpha channel
      * @return
      */
     static Mat addAlphaBGR(Mat bgr, Mat a) {
@@ -391,33 +396,19 @@ public class OpenCVUtil {
         return lines;
     }
 
-    static void line(Mat inMat, Point p1, Point p2, RGBA color, int width) {
-        Imgproc.line(inMat, p1, p2, color.toScalar(), width);
+    static void line(Mat inMat, Point p1, Point p2, Scalar color, int width) {
+        Imgproc.line(inMat, p1, p2, color, width);
     }
 
-    static class RGBA {
-        Tuple<Integer> color;
-
-        RGBA(Tuple<Integer> color) {
-            this.color = color;
-        }
-
-        RGBA(Integer r, Integer g, Integer b, Integer a) {
-            this.color = new Tuple<Integer>(r, g, b, a);
-        }
-
-        RGBA(int r, int g, int b, int a) {
-            this.color = new Tuple<Integer>(r, g, b, a);
-        }
-
-        Scalar toScalar() {
-            return new Scalar(this.color.get(0), this.color.get(1), this.color.get(2), this.color.get(3));
-        }
-
-        @Override
-        public String toString() {
-            return "(R: " + this.color.get(0) + ", G:" + this.color.get(1) + ", B:" + this.color.get(2) + ", A:" + this.color.get(3) + ")";
-        }
+    static Mat crop(Mat src, int x, int y, int width, int height) {
+        return src.submat(new Rect(x, y, width, height));
     }
 
+    static Mat crop(Mat src, Point p1, int width, int height) {
+        return src.submat(new Rect((int) p1.x, (int) p1.y, width, height));
+    }
+
+    static Mat crop(Mat src, Point p1, Point p2) {
+        return src.submat(new Rect((int) p1.x, (int) p1.y, (int) (p1.x - p2.x), (int) (p1.y - p2.y)));
+    }
 }

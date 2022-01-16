@@ -53,15 +53,8 @@ class BackgroundRemover implements AutoCloseable {
     }
 
     BackgroundRemover(BufferedImage img) {
-        //TODO: There is an error in here, some images get their channels mixed up
-
         //Make sure we get BGR without alpha
         this.img = OpenCVUtil.bufferedImageToMat(img, true)
-
-        //TODO: Remove me
-        //sleep(1)
-        //HighGui.imshow("Coin", this.img)
-        //HighGui.waitKey()
     }
 
     BackgroundRemover(String file) {
@@ -73,19 +66,13 @@ class BackgroundRemover implements AutoCloseable {
     }
 
     BufferedImage processImage() {
-        return OpenCVUtil.matToBufferedImage(this.process())
+        BufferedImage result = OpenCVUtil.matToBufferedImage(this.process())
+        return result
     }
 
     protected Mat process() {
         Mat alphaMask = generateAlphaMask(this.img)
         Mat result = OpenCVUtil.addAlphaBGR(this.img, alphaMask)
-
-        //TODO: Remove me
-        OpenCVUtil.writeImage("test-bg-int.png", this.img)
-        OpenCVUtil.writeImage("test-bg-res.png", result)
-        sleep(1)
-
-
         this.img.release()
         alphaMask.release()
         return result
