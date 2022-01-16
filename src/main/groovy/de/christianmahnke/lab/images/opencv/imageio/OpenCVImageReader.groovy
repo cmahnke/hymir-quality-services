@@ -1,6 +1,8 @@
 package de.christianmahnke.lab.images.opencv.imageio
 
 import de.christianmahnke.lab.images.opencv.OpenCVUtil
+import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
 import org.opencv.core.Mat
 import org.opencv.core.Rect
 import org.opencv.imgcodecs.Imgcodecs
@@ -12,17 +14,14 @@ import javax.imageio.metadata.IIOMetadata
 import javax.imageio.spi.ImageReaderSpi
 import java.awt.image.BufferedImage
 
+@CompileStatic
+@TypeChecked
 class OpenCVImageReader extends ImageReader {
     protected Mat img
     protected String identifier
 
     protected OpenCVImageReader(ImageReaderSpi originatingProvider) {
         super(originatingProvider)
-    }
-
-    protected OpenCVImageReader(String identifier, InputStream is, ImageReaderSpi spi) {
-        super(spi)
-        OpenCVImageReader(identifier, OpenCVUtil.loadImage(is, Imgcodecs.IMREAD_UNCHANGED), spi)
     }
 
     protected OpenCVImageReader(String identifier, Mat img, ImageReaderSpi spi) {
@@ -33,7 +32,7 @@ class OpenCVImageReader extends ImageReader {
 
     static OpenCVImageReader getInstance (String identifier, InputStream is) {
         ImageReaderSpi spi = new OpenCvImageReaderSpi()
-        return new OpenCVImageReader(identifier, is, spi)
+        return new OpenCVImageReader(identifier, OpenCVUtil.loadImage(is, Imgcodecs.IMREAD_UNCHANGED), spi)
     }
 
     static OpenCVImageReader getInstance (String identifier, Mat img) {
@@ -88,12 +87,12 @@ class OpenCVImageReader extends ImageReader {
         //throw new UnsupportedOperationException("Not implemented.")
         if (param != null && param.getSourceRegion() != null) {
 
-            int x = param.getSourceRegion().x
-            int y = param.getSourceRegion().y
-            int w = param.getSourceRegion().w
-            int h = param.getSourceRegion().h
+            def x = param.getSourceRegion().x
+            def y = param.getSourceRegion().y
+            def w = param.getSourceRegion().width
+            def h = param.getSourceRegion().height
 
-            Rect region = Rect(x, y, w, h)
+            Rect region = new Rect(x, y, w, h)
             Mat mat = this.img.submat(region)
             BufferedImage bi = OpenCVUtil.matToBufferedImage(mat)
             return bi
