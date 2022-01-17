@@ -17,8 +17,6 @@
  */
 package de.christianmahnke.lab.iiif.hymir
 
-import de.christianmahnke.lab.images.opencv.FoldRemover
-import de.christianmahnke.lab.images.opencv.FoldRemoverTest
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import org.junit.jupiter.api.BeforeEach
@@ -46,7 +44,7 @@ class FoldImageQualityServiceTest {
     }
 
     @Test
-    @Tag('')
+    @Tag('fold-iqs')
     void testProcessStream(TestInfo testInfo) {
         files.forEach (k, v) -> {
             log.info("Transforming ${v} using FoldImageQualityService with InputStream")

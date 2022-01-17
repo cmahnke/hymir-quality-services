@@ -50,12 +50,12 @@ class FoldImageQualityService implements ImageQualityService.Source {
 
     @Override
     public String name() {
-        ""
+        "Fold line remover"
     }
 
     @Override
     public ImageApiProfile.Quality getQuality() {
-        return new ImageApiProfile.Quality(name);
+        return new ImageApiProfile.Quality(name)
     }
 
     @Override

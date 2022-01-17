@@ -36,7 +36,6 @@ import java.awt.image.BufferedImage
 @TypeChecked
 @CompileStatic
 class BackgroundImageQualityService implements ImageQualityService.Source {
-    String identifier
 
     @Value('${custom.image.quality.background.enabled:true}')
     private boolean enabled
@@ -64,7 +63,7 @@ class BackgroundImageQualityService implements ImageQualityService.Source {
     }
 
     BufferedImage processImage(String identifier, BufferedImage img) {
-        log.info("Processing '${this.identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
+        log.info("Processing '${identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
         BackgroundRemover br = new BackgroundRemover(img)
         return br.processBufferedImage()
     }

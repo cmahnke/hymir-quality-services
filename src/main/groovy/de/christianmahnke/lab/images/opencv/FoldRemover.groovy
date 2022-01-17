@@ -454,12 +454,12 @@ class FoldRemover extends AbstractImageManipulator implements AutoCloseable {
                         tr = Line.calculatePoint(br, this.cut.angleRad, edgeH)
                         tl = Line.calculatePoint(tr, verticalAngle, -(edgeW))
                     } else {
-                        int w = (int) (this.w - (this.w - this.cut.top().x))
+                        int edgeW = (int) (this.w - (this.w - this.cut.top().x))
                         tr = this.cut.top()
-                        tl = Line.calculatePoint(tr, verticalAngle, w)
+                        tl = Line.calculatePoint(tr, verticalAngle, -(edgeW))
                         edgeH = (int) (this.h - tl.y)
-                        bl = Line.calculatePoint(tl, this.cut.angleRad, edgeH)
-                        br = Line.calculatePoint(bl, verticalAngle, -(w))
+                        bl = Line.calculatePoint(tl, this.cut.angleRad, -(edgeH))
+                        br = Line.calculatePoint(bl, verticalAngle, edgeW)
 
                     }
                 }
