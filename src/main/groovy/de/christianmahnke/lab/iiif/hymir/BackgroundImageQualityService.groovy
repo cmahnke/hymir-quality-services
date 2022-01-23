@@ -41,25 +41,25 @@ class BackgroundImageQualityService implements ImageQualityService.Source {
     private boolean enabled
 
     @Value('${custom.image.quality.background.name:transparent-background}')
-    private String name;
+    private String name
 
     BackgroundImageQualityService() {
 
     }
 
     @Override
-    public String name() {
+    String name() {
         ""
     }
 
     @Override
-    public ImageApiProfile.Quality getQuality() {
-        return new ImageApiProfile.Quality(name);
+    ImageApiProfile.Quality getQuality() {
+        return new ImageApiProfile.Quality(name)
     }
 
     @Override
-    public boolean enabled() {
-        return enabled;
+    boolean enabled() {
+        return enabled
     }
 
     BufferedImage processImage(String identifier, BufferedImage img) {
@@ -69,8 +69,8 @@ class BackgroundImageQualityService implements ImageQualityService.Source {
     }
 
     @Override
-    public boolean hasAlpha() {
-        return true;
+    boolean hasAlpha() {
+        return true
     }
 
     @Override

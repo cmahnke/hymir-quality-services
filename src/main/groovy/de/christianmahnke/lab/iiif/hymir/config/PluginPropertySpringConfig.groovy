@@ -7,9 +7,9 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer
 @Configuration
 class PluginPropertySpringConfig {
     @Bean
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer();
-        propertySourcesPlaceholderConfigurer.setIgnoreUnresolvablePlaceholders(true);
-        return propertySourcesPlaceholderConfigurer;
+    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+        PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer()
+        propertySourcesPlaceholderConfigurer.setIgnoreUnresolvablePlaceholders(true)
+        return propertySourcesPlaceholderConfigurer
     }
 }

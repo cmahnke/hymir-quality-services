@@ -20,7 +20,6 @@ package de.christianmahnke.lab.images.debug
 
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
-
 import org.imgscalr.Scalr
 
 import java.awt.image.BufferedImage

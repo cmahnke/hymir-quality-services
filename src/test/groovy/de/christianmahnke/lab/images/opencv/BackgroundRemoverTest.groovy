@@ -42,6 +42,7 @@ class BackgroundRemoverTest {
     @BeforeEach
     void setup() {
         files[0] = ResourceUtils.getFile("classpath:images/record_DE-MUS-062622_kenom_127703/vs.jpg")
+        files[1] = ResourceUtils.getFile("classpath:images/DE-611-HS-3461927/00000001.jpg")
     }
 
     @Test
@@ -53,50 +54,58 @@ class BackgroundRemoverTest {
     @Test
     @Tag("mat")
     void transformMat(TestInfo testInfo) {
-        BufferedImage image = ImageIO.read(files[0])
-        Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
-        BackgroundRemover br = new BackgroundRemover(cvImage)
-        Mat result = br.process()
-        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
-        log.info("""Writing ${fileName}""")
-        OpenCVUtil.saveImage(result, fileName)
+        files.forEach (i, file) -> {
+            BufferedImage image = ImageIO.read(file)
+            Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
+            BackgroundRemover br = new BackgroundRemover(cvImage)
+            Mat result = br.process()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${i}.png"
+            log.info("Writing ${fileName}")
+            OpenCVUtil.saveImage(result, fileName)
+        }
     }
 
     @Test
     @Tag("bufferedImage")
     void transformBufferedImage(TestInfo testInfo) {
-        BufferedImage image = ImageIO.read(files[0])
-        BackgroundRemover br = new BackgroundRemover(image)
-        BufferedImage result = br.processBufferedImage()
-        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
+        files.forEach (i, file) -> {
+            BufferedImage image = ImageIO.read(file)
+            BackgroundRemover br = new BackgroundRemover(image)
+            BufferedImage result = br.processBufferedImage()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${i}.png"
 
-        ImageIO.write(result, "png", new File(fileName))
-        assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
+            ImageIO.write(result, "png", new File(fileName))
+            assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
+        }
     }
 
     @Test
     @Tag("bufferedImageRGB")
     void transformBufferedImageBGR(TestInfo testInfo) {
-        BufferedImage image = ImageIO.read(files[0])
-        BackgroundRemover br = new BackgroundRemover(image)
-        BufferedImage result = br.processBufferedImage()
-        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
-        ImageIO.write(result, "png", new File(fileName))
-        assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
+        files.forEach (i, file) -> {
+            BufferedImage image = ImageIO.read(file)
+            BackgroundRemover br = new BackgroundRemover(image)
+            BufferedImage result = br.processBufferedImage()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${i}.png"
+            ImageIO.write(result, "png", new File(fileName))
+            assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
+        }
     }
 
     @Test
     @Tag("withAlpha")
     void withAlpha(TestInfo testInfo) {
-        Mat inMat = OpenCVUtil.loadImage(files[0])
-        Mat alphaMat = OpenCVUtil.cvtColor(inMat, Imgproc.COLOR_RGB2RGBA)
-        BufferedImage biA = OpenCVUtil.matToBufferedImage(alphaMat, true)
-        BackgroundRemover br1 = new BackgroundRemover(biA)
-        BufferedImage result1 = br1.processBufferedImage()
-        BackgroundRemover br2 = new BackgroundRemover(biA)
-        BufferedImage result2 = br2.processBufferedImage()
-        def fileName = "output-" + String.join("-", testInfo.getTags()) + ".png"
-        ImageIO.write(result2, "png", new File(fileName))
+        files.forEach (i, file) -> {
+            Mat inMat = OpenCVUtil.loadImage(file)
+            Mat alphaMat = OpenCVUtil.cvtColor(inMat, Imgproc.COLOR_RGB2RGBA)
+            BufferedImage biA = OpenCVUtil.matToBufferedImage(alphaMat, true)
+            BackgroundRemover br1 = new BackgroundRemover(biA)
+            BufferedImage result1 = br1.processBufferedImage()
+            BackgroundRemover br2 = new BackgroundRemover(biA)
+            BufferedImage result2 = br2.processBufferedImage()
+            def fileName = "output-" + String.join("-", testInfo.getTags()) + "-${i}.png"
+            ImageIO.write(result2, "png", new File(fileName))
+        }
     }
 
 }

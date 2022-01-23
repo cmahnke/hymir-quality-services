@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.opencv.core.CvException
 import org.opencv.core.Mat
 import org.springframework.util.ResourceUtils
 
@@ -30,19 +31,20 @@ import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 
 import static org.junit.jupiter.api.Assertions.assertTrue
+import static org.junit.jupiter.api.Assertions.fail
 
 @TypeChecked
 @Slf4j
 class FoldRemoverTest {
     static Map<Integer, File> files = new HashMap<Integer, File>()
-    static int count = 7
+    static int count = 8
 
-    static transformSingleMat (Integer k, File v, String suffix = "") {
+    static transformSingleMat(Integer k, File v, String suffix = "") {
         BufferedImage image = ImageIO.read(v)
         Mat cvImage = OpenCVUtil.bufferedImageToMat(image)
         FoldRemover fr = new FoldRemover(cvImage, FoldRemover.guessSide(v.toString()))
         Mat result = fr.process()
-        def fileName = "output-${suffix}-" +  k.toString() + ".png"
+        def fileName = "output-${suffix}-" + k.toString() + ".png"
         OpenCVUtil.saveImage(result, fileName)
     }
 
@@ -76,7 +78,11 @@ class FoldRemoverTest {
     void testTransformMat(TestInfo testInfo) {
         files.forEach (k, v) -> {
             log.info("Transforming ${v} using Mat")
-            transformSingleMat(k, v, String.join("-", testInfo.getTags()))
+            try {
+                transformSingleMat(k, v, String.join("-", testInfo.getTags()))
+            } catch (CvException cve) {
+                fail("Failed to process ${v}", cve)
+            }
         }
     }
 
@@ -99,7 +105,7 @@ class FoldRemoverTest {
     @Test
     @Tag('prototype-image')
     void testTransformPrototype(TestInfo testInfo) {
-        def i = 7
+        def i = 8
         log.info("Processing nr ${i} - ${files.get(i)}")
         transformSingleMat(i, files.get(i), String.join("-", testInfo.getTags()))
     }

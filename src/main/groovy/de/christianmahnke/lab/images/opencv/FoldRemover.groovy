@@ -104,19 +104,19 @@ class FoldRemover extends AbstractImageManipulator implements AutoCloseable {
         return rotated
     }
 
-    public setKeepSize(boolean keepSize) {
+    def setKeepSize(boolean keepSize) {
         this.keepSize = keepSize
     }
 
-    public boolean getKeepSize() {
+    boolean getKeepSize() {
         return this.keepSize
     }
 
-    public setFitBox(boolean fitBox) {
+    def setFitBox(boolean fitBox) {
         this.fitBox = fitBox
     }
 
-    public boolean getFitBox() {
+    boolean getFitBox() {
         return this.fitBox
     }
 
@@ -424,8 +424,8 @@ class FoldRemover extends AbstractImageManipulator implements AutoCloseable {
                 def pBottom = Line.calculatePoint(new Point(this.cut.bottom().x, this.cut.bottom().y), verticalAngle, edgeW)
                 this.box = new Tuple(new Point(this.cut.top().x, this.cut.top().y), pTop, pBottom, new Point(this.cut.bottom().x, this.cut.bottom().y))
             } else {
-                def Point tl, tr, bl, br
-                def int edgeH
+                Point tl, tr, bl, br
+                int edgeH
 
                 if (this.cut.angleDeg > -90) {
                     if (side == Side.RECTO) {

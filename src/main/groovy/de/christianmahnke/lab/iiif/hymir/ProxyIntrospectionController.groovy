@@ -46,7 +46,7 @@ class ProxyIntrospectionController implements HymirPlugin {
     BackendMappingUtil bmu
 
     // Taken from de.digitalcollections.iiif.hymir.image.frontend.IIIFImageApiController - why such a method is private is beyond me
-    public static String getUrlBase(HttpServletRequest request) {
+    static String getUrlBase(HttpServletRequest request) {
         String scheme = request.getHeader("X-Forwarded-Proto")
         if (scheme == null) {
             scheme = request.getScheme()
@@ -71,12 +71,12 @@ class ProxyIntrospectionController implements HymirPlugin {
 
     @CrossOrigin
     @RequestMapping(value = "/json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map> listBackendsJSON() {
+    ResponseEntity<Map> listBackendsJSON() {
         return new ResponseEntity<Map>(bmu.getMappings(), HttpStatus.OK)
     }
 
     @RequestMapping(value = "/json/patterns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map> listPatternsJSON(HttpServletRequest request) {
+    ResponseEntity<Map> listPatternsJSON(HttpServletRequest request) {
         String newPrefix = getUrlBase(request) + iiifImageApiUrlPrefix
         return new ResponseEntity<Map>(bmu.mappingPatterns(newPrefix), HttpStatus.OK)
     }
@@ -86,6 +86,7 @@ class ProxyIntrospectionController implements HymirPlugin {
     ResponseEntity<String> listBackendsJS(HttpServletRequest request) {
         String newPrefix = getUrlBase(request) + iiifImageApiUrlPrefix
         StringBuilder js = new StringBuilder()
+        js.append("const proxyBaseUrl = '${newPrefix}';\n\n")
         js.append("function rewriteURL(url) {\n")
         bmu.mappingPatterns(newPrefix).each { from, to ->
             from = from.replace('/', '\\/')
@@ -97,7 +98,7 @@ class ProxyIntrospectionController implements HymirPlugin {
         }
         js.append("\treturn url;\n")
         js.append("}\n")
-        return new ResponseEntity<String>(js.toString(), HttpStatus.OK);
+        return new ResponseEntity<String>(js.toString(), HttpStatus.OK)
     }
 
     @Override

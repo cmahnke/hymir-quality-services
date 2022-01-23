@@ -20,9 +20,7 @@ package de.christianmahnke.lab.images.opencv
 import de.christianmahnke.lab.images.opencv.OpenCVUtil as CV
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
-
 import nu.pattern.OpenCV
-
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Point
@@ -34,9 +32,10 @@ import java.awt.image.BufferedImage
 @CompileStatic
 class BackgroundRemover extends AbstractImageManipulator implements AutoCloseable {
 
+    // Tweaks
     protected Point INITIAL = new Point(1d, 1d)
     protected Scalar FILL = new Scalar(255)
-    protected int THRESHOLD = 15
+    protected int THRESHOLD = 20 // 15 works well for coins with white background
     protected Mat img = null
 
     static {
@@ -77,10 +76,21 @@ class BackgroundRemover extends AbstractImageManipulator implements AutoCloseabl
         if (inMat.channels() > 3) {
             throw new IllegalStateException("Number of channels in input image must be 1 or 3")
         }
-        // TODO: Check order of arguments
         Mat wrkMat = new Mat()
         int w = inMat.cols()
         int h = inMat.rows()
+
+        //TODO: Currently Thresholding only works with either black or white backgrounds - it can also be inproved by creating unsharp masks
+        int initialThreshold
+        if (inMat.channels() == 3) {
+            initialThreshold = (inMat.get(INITIAL.x as int, INITIAL.y as int).sum() / inMat.channels()) as int
+        } else {
+            initialThreshold = (int) inMat.get(INITIAL.x as int, INITIAL.y as int)[0]
+        }
+
+        if (initialThreshold < 127) {
+            inMat = CV.bitwise_not(inMat)
+        }
 
         wrkMat = CV.threshold(inMat, 255 - THRESHOLD, 255, CV.THRESH_BINARY_INV)
         Mat floodfill = CV.copy(wrkMat)

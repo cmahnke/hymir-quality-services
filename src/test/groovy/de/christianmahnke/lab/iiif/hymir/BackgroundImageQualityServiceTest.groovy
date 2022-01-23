@@ -17,6 +17,7 @@
  */
 package de.christianmahnke.lab.iiif.hymir
 
+import de.christianmahnke.lab.images.opencv.OpenCVUtil
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
 import org.junit.jupiter.api.BeforeEach
@@ -25,6 +26,9 @@ import org.springframework.util.ResourceUtils
 
 import javax.imageio.ImageIO
 import javax.imageio.ImageReader
+import java.awt.image.BufferedImage
+
+import static org.junit.jupiter.api.Assertions.assertTrue
 
 @TypeChecked
 @Slf4j
@@ -38,10 +42,12 @@ class BackgroundImageQualityServiceTest {
     }
 
     @Test
-    void backgroundServiceTest () {
+    void backgroundServiceTest() {
         BackgroundImageQualityService biqs = new BackgroundImageQualityService()
         ImageReader reader = biqs.processStream("test", new FileInputStream(files.get(0)))
         def fileName = "output-background-iqs.png"
-        ImageIO.write(reader.read(0), "png", new File(fileName))
+        BufferedImage result = reader.read(0)
+        ImageIO.write(result, "png", new File(fileName))
+        assertTrue(OpenCVUtil.isTransparent(result, 1, 1))
     }
 }

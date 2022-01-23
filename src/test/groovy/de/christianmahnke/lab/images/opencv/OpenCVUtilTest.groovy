@@ -17,40 +17,22 @@
  */
 package de.christianmahnke.lab.images.opencv
 
+import de.christianmahnke.lab.images.TestPatternBase
 import de.christianmahnke.lab.images.debug.ImageChecker
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FilenameUtils
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.opencv.core.Mat
-import org.springframework.util.ResourceUtils
 
 import javax.imageio.ImageIO
-import javax.swing.*
-import java.awt.*
 import java.awt.image.BufferedImage
-import java.util.List
 
 import static org.junit.jupiter.api.Assertions.*
 
 @TypeChecked
 @Slf4j
-class OpenCVUtilTest {
-
-    List<File> patterns
-    File transparent
-
-    protected String getOutputFileName(File file, String marker) {
-        return "output-${marker}-${FilenameUtils.getBaseName(file.getAbsolutePath())}.png"
-    }
-
-    @BeforeEach
-    void setup() {
-        this.patterns = Arrays.asList(ResourceUtils.getFile("classpath:images/pattern.png"), ResourceUtils.getFile("classpath:images/patternAlpha.png"))
-        this.transparent = ResourceUtils.getFile("classpath:transparent.png")
-    }
+class OpenCVUtilTest extends TestPatternBase {
 
     @Test
     void loadImageImageIOTest(TestInfo testInfo) {
@@ -80,6 +62,7 @@ class OpenCVUtilTest {
             def fileName = getOutputFileName(pattern, "mat-to-bi")
             ImageIO.write(image, "png", new File(fileName))
             assertTrue(new ImageChecker(pattern, new File(fileName)).compare())
+            assertTrue(checkTranparentArea(pattern, image) == null || checkTranparentArea(pattern, image))
         }
     }
 
@@ -165,20 +148,7 @@ class OpenCVUtilTest {
             def fileName = getOutputFileName(pattern, "read-inputstream")
             ImageIO.write(bi, "png", new File(fileName))
             assertTrue(new ImageChecker(pattern, new File(fileName)).compare())
+            assertTrue(checkTranparentArea(pattern, bi) == null || checkTranparentArea(pattern, bi))
         }
-    }
-
-    public static void display(BufferedImage image) {
-        JFrame frame = new JFrame();
-        frame.setTitle("stained_image");
-        frame.setSize(image.getWidth(), image.getHeight());
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        JLabel label = new JLabel();
-        label.setIcon(new ImageIcon(image));
-        frame.getContentPane().add(label, BorderLayout.CENTER);
-        frame.setLocationRelativeTo(null);
-        frame.pack();
-        frame.setVisible(true);
-        sleep(5000)
     }
 }

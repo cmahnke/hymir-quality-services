@@ -32,7 +32,7 @@ import javax.imageio.ImageReader
 @Slf4j
 class FoldImageQualityServiceTest {
     static Map<Integer, File> files = new HashMap<Integer, File>()
-    static int count = 7
+    static int count = 8
 
     @BeforeEach
     void setup() {

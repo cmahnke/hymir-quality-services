@@ -42,24 +42,24 @@ class FoldImageQualityService implements ImageQualityService.Source {
     private boolean enabled
 
     @Value('${custom.image.quality.fold.name:nofold}')
-    private String name;
+    private String name
 
     FoldImageQualityService() {
 
     }
 
     @Override
-    public String name() {
+    String name() {
         "Fold line remover"
     }
 
     @Override
-    public ImageApiProfile.Quality getQuality() {
+    ImageApiProfile.Quality getQuality() {
         return new ImageApiProfile.Quality(name)
     }
 
     @Override
-    public boolean enabled() {
+    boolean enabled() {
         return enabled
     }
 
@@ -73,14 +73,14 @@ class FoldImageQualityService implements ImageQualityService.Source {
             side = "NONE"
         }
         FoldRemover fr = new FoldRemover(img, side)
-        fr.setKeepSize(true);
+        fr.setKeepSize(true)
         log.info("Processing '${identifier}' with ${this.getClass().getSimpleName()} - Image Info: ${img.getWidth()}x${img.getHeight()}, channels ${img.getColorModel().getNumComponents()}")
         return fr.processBufferedImage()
     }
 
     @Override
-    public boolean hasAlpha() {
-        return false;
+    boolean hasAlpha() {
+        return false
     }
 
     @Override
@@ -93,7 +93,7 @@ class FoldImageQualityService implements ImageQualityService.Source {
             side = "NONE"
         }
         FoldRemover fr = new FoldRemover(inputStream, side)
-        fr.setKeepSize(true);
+        fr.setKeepSize(true)
         Mat img = fr.processMat()
         return OpenCVImageReader.getInstance(img)
     }

@@ -27,8 +27,8 @@ class ImageChecker {
             return false
         }
 
-        for (int y = 0; y < imageA.height-skip; y += skip) {
-            for (int x = 0; x < imageA.width-skip; x += skip) {
+        for (int y = 0; y < imageA.height - skip; y += skip) {
+            for (int x = 0; x < imageA.width - skip; x += skip) {
                 if (imageA.getRGB(x, y) != imageB.getRGB(x, y)) {
                     return false
                 }

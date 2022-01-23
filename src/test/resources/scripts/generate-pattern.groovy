@@ -68,7 +68,6 @@ Mat mask = new Mat(testpattern.height(), testpattern.width(), CvType.CV_8U)
 mask.setTo(new Scalar(255))
 
 def overlap = 2
-//def alphaPatches = 4
 
 for (i = 0; i < Math.sqrt(fields.size()) - 1; i++) {
     def x = (i * fieldWidth + fieldWidth - (fieldWidth / overlap) / 2).toInteger()
@@ -78,6 +77,12 @@ for (i = 0; i < Math.sqrt(fields.size()) - 1; i++) {
         part.setTo(new Scalar(127))
     }
 }
+
+def x = (Math.sqrt(fields.size()) - 1) * fieldWidth + fieldWidth / overlap
+def y = (Math.sqrt(fields.size()) - 1) * fieldHeight + fieldHeight / overlap
+
+Mat part = mask.submat(new Rect(x, y, fieldWidth / overlap, fieldHeight / overlap))
+part.setTo(new Scalar(0))
 
 List<Mat> bgr = new ArrayList<Mat>();
 Core.split(alphaPattern, bgr);

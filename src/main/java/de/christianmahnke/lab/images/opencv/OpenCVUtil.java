@@ -21,6 +21,7 @@ import com.google.common.primitives.Doubles;
 import nu.pattern.OpenCV;
 import org.opencv.core.Point;
 import org.opencv.core.*;
+import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -30,7 +31,6 @@ import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +38,10 @@ import java.util.List;
 //TODO: There might be some memory leaks in here since the used OpenCV Mat's aren't cleared
 public class OpenCVUtil {
     // See https://docs.opencv.org/4.x/javadoc/constant-values.html
+    public static final int THRESH_BINARY = 0;
     public static final int THRESH_BINARY_INV = 1;
+    public static final int THRESH_TOZERO = 3;
+    public static final int THRESH_TOZERO_INV = 4;
 
     public static final int COLOR_RGB2RGBA = 0;
     public static final int COLOR_BGR2BGRA = 0;
@@ -68,10 +71,6 @@ public class OpenCVUtil {
 
     private OpenCVUtil() {
 
-    }
-
-    public OpenCVUtil getIntance() {
-        return instance;
     }
 
     public static Mat loadImage(String file, Integer mode) {
@@ -217,17 +216,17 @@ public class OpenCVUtil {
         return wrkMat;
     }
 
+    protected static void COLOR_ARGB2BGRA(Mat src, Mat dst) {
+        int[] fromTo = {0, 3, 1, 2, 2, 1, 3, 0};
+        Core.mixChannels(Arrays.asList(src), Arrays.asList(dst), new MatOfInt(fromTo));
+    }
+
     /*
     protected static void COLOR_RGBA2ABGR(Mat src, Mat dst) {
         int[] fromTo = {0, 3, 1, 2, 2, 1, 3, 0};
         Core.mixChannels(Arrays.asList(src), Arrays.asList(dst), new MatOfInt(fromTo));
     }
     */
-
-    protected static void COLOR_ARGB2BGRA(Mat src, Mat dst) {
-        int[] fromTo = {0, 3, 1, 2, 2, 1, 3, 0};
-        Core.mixChannels(Arrays.asList(src), Arrays.asList(dst), new MatOfInt(fromTo));
-    }
 
     protected static void COLOR_BGRA2BGR(Mat src, Mat dst) {
         cvtColor(src, dst, COLOR_BGRA2BGR, 3);
@@ -426,5 +425,14 @@ public class OpenCVUtil {
 
     static Mat crop(Mat src, Point p1, Point p2) {
         return src.submat(new Rect((int) p1.x, (int) p1.y, (int) (p1.x - p2.x), (int) (p1.y - p2.y)));
+    }
+
+    static void show(Mat img) {
+        HighGui.imshow("Debug Image", img);
+        HighGui.waitKey(0);
+    }
+
+    public OpenCVUtil getIntance() {
+        return instance;
     }
 }

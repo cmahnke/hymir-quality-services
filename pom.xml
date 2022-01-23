@@ -7,25 +7,24 @@
     <version>1.0-SNAPSHOT</version>
     <name>Hymir Plugins to generate different IIIF qualities</name>
 
-    <!--
-    <prerequisites>
-        <maven>3.4</maven>
-    </prerequisites>
-    -->
-
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <spring.boot.version>2.5.4</spring.boot.version>
+        <!-- Version from parent is 2.5.4 - but this version causes some problems -->
+        <spring.boot.version>2.6.3</spring.boot.version>
+        <spring.version>5.3.15</spring.version>
         <groovy.version>3.0.9</groovy.version>
         <opencv.version>4.5.1-2</opencv.version>
-        <junit.version>5.8.2</junit.version>
+        <junit5.version>5.8.2</junit5.version>
         <guava.version>31.0.1-jre</guava.version>
-        <logback.version>1.0.13</logback.version>
+        <!-- Was 1.0.13, either from parent or from Groovy -->
+        <logback.version>1.2.3</logback.version>
         <imgscalr.version>4.2</imgscalr.version>
         <jansi.version>2.4.0</jansi.version>
+        <jsonpath.version>2.6.0</jsonpath.version>
+        <jackson.version>2.12.4</jackson.version>
         <download.verbose>false</download.verbose>
     </properties>
 
@@ -65,21 +64,18 @@
         <developerConnection>git@github.com/cmahnke/hymir-quality-services.git</developerConnection>
         <url>https://github.com/cmahnke/hymir-quality-services</url>
     </scm>
-    <!-- TODO: This needs authentication, solve this by providing a settings.xml file
-    <repositories>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/cmahnke/hymir-quality-services</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>central</id>
-            <url>https://repo1.maven.org/maven2</url>
-        </repository>
-    </repositories>
-    -->
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -87,11 +83,87 @@
             <artifactId>groovy-all</artifactId>
             <version>${groovy.version}</version>
             <type>pom</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-yaml</artifactId>
+            <version>${groovy.version}</version>
         </dependency>
         <dependency>
             <groupId>de.digitalcollections</groupId>
             <artifactId>iiif-server-hymir</artifactId>
             <version>5.1.2-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>de.digitalcollections.commons</groupId>
+                    <artifactId>dc-commons-springboot</artifactId>
+                </exclusion>
+                <!-- Exclusions from de.digitalcollections.commons:dc-commons-springmvc -->
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-crypto</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-web</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.thymeleaf</groupId>
+                    <artifactId>thymeleaf</artifactId>
+                </exclusion>
+                <!-- Spring exclusions -->
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-beans</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-contex</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-actuator</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-security</artifactId>
+                </exclusion>
+                <!-- Other exclusions -->
+                <exclusion>
+                    <groupId>io.micrometer</groupId>
+                    <artifactId>micrometer-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.micrometer</groupId>
+                    <artifactId>micrometer-registry-prometheus</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.thymeleaf.extras</groupId>
+                    <artifactId>thymeleaf-extras-conditionalcomments</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>nz.net.ultraq.thymeleaf</groupId>
+                    <artifactId>thymeleaf-layout-dialect</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.openpnp</groupId>
@@ -113,16 +185,28 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
         </dependency>
+        <!-- Needed for rewriting -->
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>${jsonpath.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- Test Dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
+            <version>${junit5.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
+            <version>${junit5.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -136,12 +220,21 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring.boot.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-parent</artifactId>
-            <version>${spring.boot.version}</version>
-            <type>pom</type>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>15.3</version>
             <scope>test</scope>
         </dependency>
         <!-- The following two dependencies are only needed for testing -->
@@ -294,7 +387,7 @@
                                         dest="${download.dir.data}/record_DE-MUS-062622_kenom_127703/record_DE-MUS-062622_kenom_127703.lido.xml"
                                         verbose="${download.verbose}"
                                         usetimestamp="true"/>
-                                <!-- Only the images of DE-611-HS-3461927 -->
+                                <!-- Data and images of DE-611-HS-3461927 -->
                                 <mkdir dir="${download.dir.images}/DE-611-HS-3461927"/>
                                 <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000001/full/full/0/default.jpg"
                                      dest="${download.dir.images}/DE-611-HS-3461927/00000001.jpg"
@@ -324,7 +417,37 @@
                                      dest="${download.dir.images}/DE-611-HS-3461927/00000007.jpg"
                                      verbose="${download.verbose}"
                                      usetimestamp="true"/>
+                                <get src="https://images.sub.uni-goettingen.de/iiif/image/gdz:DE-611-HS-3461927:00000008/full/full/0/default.jpg"
+                                     dest="${download.dir.images}/DE-611-HS-3461927/00000008.jpg"
+                                     verbose="${download.verbose}"
+                                     usetimestamp="true"/>
+                                <mkdir dir="${download.dir.data}/DE-611-HS-3461927"/>
+                                <get
+                                        src="https://manifests.sub.uni-goettingen.de/iiif/presentation/DE-611-HS-3461927/manifest?version=r3rpa"
+                                        dest="${download.dir.data}/DE-611-HS-3461927/DE-611-HS-3461927.json"
+                                        verbose="${download.verbose}"
+                                        usetimestamp="true"/>
                             </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>2.17.1</version>
+                <executions>
+                    <execution>
+                        <id>format-data</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>format</goal>
+                            <goal>validate</goal>
+                        </goals>
+                        <configuration>
+                            <directories>
+                                <directory>${project.basedir}/src/test/resources/data</directory>
+                            </directories>
                         </configuration>
                     </execution>
                 </executions>
@@ -408,6 +531,7 @@
                             <include>org.openpnp:opencv</include>
                             <include>com.google.guava:guava</include>
                             <include>net.sf.saxon:Saxon-HE</include>
+                            <include>com.jayway.jsonpath:json-path</include>
                             <!--
                             <include>ch.qos.logback:logback-classic</include>
                             <include>ch.qos.logback:logback-core</include>

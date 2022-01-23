@@ -35,7 +35,7 @@ class BackendMappingUtil {
     @Autowired
     IdentifierPatternToFileResourceUriResolvingConfig resolverConfig
 
-    public Map<String, List<String>> getMappings() {
+    Map<String, List<String>> getMappings() {
         Map<String, List<String>> mappings = new HashMap<String, List<String>>()
         for (IdentifierToFileResourceUriResolver resolver : resolverConfig.getPatterns()) {
             if (resolver instanceof IdentifierPatternToFileResourceUriResolverImpl) {
@@ -50,7 +50,7 @@ class BackendMappingUtil {
         mappings
     }
 
-    public Map<String, String> mappingPatterns(String newPrefix) {
+    Map<String, String> mappingPatterns(String newPrefix) {
         Map<String, String> patterns = new HashMap<String, String>()
         getMappings().each { pattern, replacements ->
             String suffix = pattern
