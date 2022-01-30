@@ -32,12 +32,16 @@ import org.springframework.stereotype.Service
 @Service
 @Import(SpringConfigCommonsFile.class)
 class BackendMappingUtil {
-    @Autowired
-    IdentifierPatternToFileResourceUriResolvingConfig resolverConfig
+
+    IdentifierPatternToFileResourceUriResolvingConfig resourceRepository
+
+    BackendMappingUtil(@Autowired IdentifierPatternToFileResourceUriResolvingConfig resourceRepository) {
+        this.resourceRepository = resourceRepository
+    }
 
     Map<String, List<String>> getMappings() {
         Map<String, List<String>> mappings = new HashMap<String, List<String>>()
-        for (IdentifierToFileResourceUriResolver resolver : resolverConfig.getPatterns()) {
+        for (IdentifierToFileResourceUriResolver resolver : resourceRepository.getPatterns()) {
             if (resolver instanceof IdentifierPatternToFileResourceUriResolverImpl) {
                 String pattern = ((IdentifierPatternToFileResourceUriResolverImpl) resolver).getPattern()
                 List<String> substitutions = ((IdentifierPatternToFileResourceUriResolverImpl) resolver).getSubstitutions()

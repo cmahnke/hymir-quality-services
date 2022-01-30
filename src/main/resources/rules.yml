@@ -5,6 +5,12 @@ resourceRepository:
         substitutions:
           - 'https://images.sub.uni-goettingen.de/iiif/image/$1/full/full/0/default.jpg'
           - 'https://manifests.sub.uni-goettingen.de/iiif/presentation/$1/manifest?version=r3rpa'
+      - pattern: ^(PPN\d*)$
+        substitutions:
+          - 'https://manifests.sub.uni-goettingen.de/iiif/presentation/$1/manifest?version=r3rpa'
+      - pattern: ^(DE-611-HS-\d*)$
+        substitutions:
+          - 'https://manifests.sub.uni-goettingen.de/iiif/presentation/$1/manifest?version=r3rpa'
       - pattern: ^(record_.*.jpg)$
         substitutions:
           - 'https://sammlungen.uni-goettingen.de/api/v1/records/$1/full/full/0/default.jpg'

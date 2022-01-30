@@ -17,16 +17,13 @@
  */
 package de.christianmahnke.lab.iiif.hymir
 
-import de.digitalcollections.commons.file.config.SpringConfigCommonsFile
+import groovy.json.JsonSlurper
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -37,6 +34,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
+import static org.junit.jupiter.api.Assertions.assertNotNull
 import static org.junit.jupiter.api.Assertions.assertTrue
 import static org.junit.jupiter.api.Assertions.fail
 
@@ -45,9 +43,9 @@ import static org.junit.jupiter.api.Assertions.fail
 @ActiveProfiles("plugins,test")
 @WebMvcTest
 @ComponentScan(basePackages = ['de.christianmahnke.lab.iiif.hymir', 'de.digitalcollections.commons.file'])
-@TestPropertySource(locations = ['classpath:application.yml', 'classpath:rules.yml'])
-@Import(SpringConfigCommonsFile.class)
-//@AutoConfigureMockMvc
+@TestPropertySource(locations = ['classpath:rules.yml', 'classpath:application.yml'],
+        properties = ['resourceRepository.resolved.patterns[0].pattern=^(PPN\\d*)$',
+        'resourceRepository.resolved.patterns[0].substitutions=https://manifests.sub.uni-goettingen.de/iiif/presentation/$1/manifest?version=r3rpa'])
 class ProxyIntrospectionControllerTest {
 
     @Autowired
@@ -59,11 +57,11 @@ class ProxyIntrospectionControllerTest {
     }
 
     @Test
-    @Disabled
     void testJS() {
         MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/mappings/js")).andExpect(MockMvcResultMatchers.status().isOk()).andReturn()
         String js = result.getResponse().getContentAsString()
         ScriptEngine engine = getEngine()
+        log.debug("Result is:\n${js}")
 
         try {
             engine.eval(js)
@@ -74,20 +72,16 @@ class ProxyIntrospectionControllerTest {
     }
 
     @Test
-    @Disabled
     void testJSON() {
         MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/mappings/json")).andExpect(MockMvcResultMatchers.status().isOk()).andReturn()
         String json = result.getResponse().getContentAsString()
 
-        //String json = new ObjectMapper().writeValueAsString(resp.getBody());
+        log.debug("Result is:\n${json}")
 
-        ScriptEngine engine = getEngine()
+        def slurper = new JsonSlurper()
+        Object object = slurper.parseText(json)
 
-        try {
-            engine.eval(json)
-            assertTrue(true)
-        } catch (final ScriptException se) {
-            fail(se)
-        }
+        assertTrue(object instanceof Map)
+        assertNotNull(object)
     }
 }

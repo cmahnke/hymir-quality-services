@@ -7,9 +7,15 @@ custom:
       noop:
         enabled: true
       background:
+        name: transparent-background
         enabled: true
       fold:
+        name: nofold
         enabled: true
+      stack:
+        name: nofold+transparentbg
+        enabled: true
+        plugins: nofold,transparent-background
   iiif:
     identifier:
       escape: false

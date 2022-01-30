@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue
 @TypeChecked
 @Slf4j
 @SpringBootTest(classes = ImageQualityMockApplication.class)
-@TestPropertySource(locations = ['classpath:application.yml', 'classpath:StackTest.properties'])
+@TestPropertySource(locations = ['classpath:application.yml'])
 @ActiveProfiles("plugins,test")
 class StackImageQualityServiceTest extends FoldImageQualityServiceTest {
 

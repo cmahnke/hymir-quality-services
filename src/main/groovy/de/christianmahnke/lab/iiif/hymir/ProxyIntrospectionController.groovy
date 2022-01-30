@@ -45,6 +45,10 @@ class ProxyIntrospectionController implements HymirPlugin {
     @Autowired
     BackendMappingUtil bmu
 
+    ProxyIntrospectionController (@Autowired BackendMappingUtil bmu) {
+        this.bmu = bmu
+    }
+
     // Taken from de.digitalcollections.iiif.hymir.image.frontend.IIIFImageApiController - why such a method is private is beyond me
     static String getUrlBase(HttpServletRequest request) {
         String scheme = request.getHeader("X-Forwarded-Proto")
@@ -86,7 +90,7 @@ class ProxyIntrospectionController implements HymirPlugin {
     ResponseEntity<String> listBackendsJS(HttpServletRequest request) {
         String newPrefix = getUrlBase(request) + iiifImageApiUrlPrefix
         StringBuilder js = new StringBuilder()
-        js.append("const proxyBaseUrl = '${newPrefix}';\n\n")
+        js.append("var proxyBaseUrl = '${newPrefix}';\n\n")
         js.append("function rewriteURL(url) {\n")
         bmu.mappingPatterns(newPrefix).each { from, to ->
             from = from.replace('/', '\\/')
