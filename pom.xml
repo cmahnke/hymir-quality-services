@@ -23,7 +23,7 @@
         <logback.version>1.2.3</logback.version>
         <imgscalr.version>4.2</imgscalr.version>
         <jansi.version>2.4.0</jansi.version>
-        <jsonpath.version>2.6.0</jsonpath.version>
+        <jsonpath.version>2.7.0</jsonpath.version>
         <jackson.version>2.12.4</jackson.version>
         <download.verbose>false</download.verbose>
     </properties>
