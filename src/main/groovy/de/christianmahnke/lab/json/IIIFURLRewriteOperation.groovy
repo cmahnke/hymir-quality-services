@@ -20,11 +20,29 @@ package de.christianmahnke.lab.json
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 
+import java.util.regex.Pattern
+
 @TypeChecked
 @CompileStatic
 class IIIFURLRewriteOperation extends RegexRewriteOperation {
 
     IIIFURLRewriteOperation(String from, String to) {
         super('$..@id', from, to)
+    }
+
+    IIIFURLRewriteOperation(Map<String, String> replacements) {
+        super(replacements)
+    }
+
+    RegexRewriteOperation addURL(String from, String to) {
+        this.replacements.put(Pattern.compile(from), to)
+        return this
+    }
+
+    RegexRewriteOperation addURLs(Map<String, String> replacements) {
+        for (String from: replacements.keySet()) {
+            this.replacements.put(Pattern.compile(from), replacements.get(from))
+        }
+        return this
     }
 }

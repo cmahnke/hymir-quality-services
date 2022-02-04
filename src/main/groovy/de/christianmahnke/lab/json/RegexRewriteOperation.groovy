@@ -21,23 +21,43 @@ import com.jayway.jsonpath.TypeRef
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @TypeChecked
 @CompileStatic
 class RegexRewriteOperation implements JSONRewriteOperation {
     List<String> jsonPath = ['']
-    Pattern from
-    String to
+    Map<Pattern, String> replacements = new HashMap<>()
 
     protected RegexRewriteOperation(String from, String to) {
-        this.from = Pattern.compile(from)
-        this.to = to
+        this.replacements = new HashMap<Pattern, String>()
+        this.replacements.put(Pattern.compile(from), to)
+    }
+
+    protected RegexRewriteOperation(Map<?, String> replacements) {
+        for (def from: replacements.keySet()) {
+            if (from instanceof Pattern) {
+                this.replacements.put(from, replacements.get(from))
+            } else if (from instanceof String) {
+                this.replacements.put(Pattern.compile(from), replacements.get(from))
+            }
+        }
     }
 
     RegexRewriteOperation(String jsonPath, String from, String to) {
         this(from, to)
         this.jsonPath = Arrays.asList(jsonPath)
+    }
+
+    RegexRewriteOperation addPattern(Pattern from, String to) {
+        this.replacements.put(from, to)
+        return this
+    }
+
+    RegexRewriteOperation addPattern(String from, String to) {
+        this.replacements.put(Pattern.compile(from), to)
+        return this
     }
 
     @Override
@@ -48,7 +68,16 @@ class RegexRewriteOperation implements JSONRewriteOperation {
     @Override
     Object rewrite(String path, Object value) {
         if (value instanceof String) {
-            return ((String) value).replaceAll(from, to)
+            for (Pattern pattern: replacements.keySet()) {
+                Matcher matcher = pattern.matcher((String) value)
+                if (matcher.matches()) {
+                    String to = replacements.get(pattern)
+                    return ((String) value).replaceAll(pattern, to)
+                }
+
+            }
+            //No match found
+            return value
         }
         throw new IllegalStateException(this.getClass().getSimpleName() + ' can only replace string values')
     }

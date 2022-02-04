@@ -17,6 +17,7 @@
  */
 package de.christianmahnke.lab.iiif.hymir
 
+import de.christianmahnke.lab.spring.YamlPropertySourceFactory
 import groovy.json.JsonSlurper
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
@@ -24,8 +25,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -34,18 +35,15 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-import static org.junit.jupiter.api.Assertions.assertNotNull
-import static org.junit.jupiter.api.Assertions.assertTrue
-import static org.junit.jupiter.api.Assertions.fail
+import static org.junit.jupiter.api.Assertions.*
 
 @TypeChecked
 @Slf4j
 @ActiveProfiles("plugins,test")
 @WebMvcTest
 @ComponentScan(basePackages = ['de.christianmahnke.lab.iiif.hymir', 'de.digitalcollections.commons.file'])
-@TestPropertySource(locations = ['classpath:rules.yml', 'classpath:application.yml'],
-        properties = ['resourceRepository.resolved.patterns[0].pattern=^(PPN\\d*)$',
-        'resourceRepository.resolved.patterns[0].substitutions=https://manifests.sub.uni-goettingen.de/iiif/presentation/$1/manifest?version=r3rpa'])
+@PropertySource(value = ['classpath:rules.yml', 'classpath:application.yml'], factory = YamlPropertySourceFactory)
+
 class ProxyIntrospectionControllerTest {
 
     @Autowired

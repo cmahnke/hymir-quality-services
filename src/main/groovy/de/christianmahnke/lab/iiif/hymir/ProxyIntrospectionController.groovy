@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletRequest
 class ProxyIntrospectionController implements HymirPlugin {
 
     @Value('${custom.iiif.image.urlPrefix:/image/v2/}')
-    String iiifImageApiUrlPrefix
+    public static String iiifImageApiUrlPrefix
 
     @Autowired
     BackendMappingUtil bmu

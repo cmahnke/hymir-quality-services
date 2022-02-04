@@ -17,7 +17,12 @@
  */
 package de.christianmahnke.lab.json
 
-import com.jayway.jsonpath.*
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.DocumentContext
+import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.PathNotFoundException
+import com.jayway.jsonpath.TypeRef
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
 import com.jayway.jsonpath.spi.json.JsonProvider
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
@@ -39,26 +44,7 @@ class JSONRewriter {
     private Configuration pathConf = Configuration.builder().options(Option.AS_PATH_LIST).build()
 
     static {
-        Configuration.setDefaults(new Configuration.Defaults() {
-
-            private final JsonProvider jsonProvider = new JacksonJsonProvider()
-            private final MappingProvider mappingProvider = new JacksonMappingProvider()
-
-            @Override
-            JsonProvider jsonProvider() {
-                return jsonProvider
-            }
-
-            @Override
-            MappingProvider mappingProvider() {
-                return mappingProvider
-            }
-
-            @Override
-            Set<Option> options() {
-                return EnumSet.noneOf(Option.class)
-            }
-        })
+        setupJSONPath()
     }
 
     private DocumentContext pathCtx, valueCtx
@@ -87,7 +73,7 @@ class JSONRewriter {
                 List<String> paths
                 try {
                     paths = pathCtx.read(qPath, typeRef)
-                } catch (com.jayway.jsonpath.PathNotFoundException e) {
+                } catch (PathNotFoundException e) {
                     //Path ot found, nothing to do
                     log.trace("${qPath} not found", e)
                     continue
@@ -106,8 +92,6 @@ class JSONRewriter {
                     Object newValue = op.rewrite(path, oldValue)
                     if (newValue == null) {
                         valueCtx.delete(path)
-                    } else if (newValue instanceof String) {
-                        valueCtx.set(path, newValue)
                     } else {
                         valueCtx.set(path, newValue)
                     }
@@ -124,5 +108,27 @@ class JSONRewriter {
         return new ByteArrayInputStream(json.getBytes())
     }
 
+    static void setupJSONPath() {
+        Configuration.setDefaults(new Configuration.Defaults() {
+
+            private final JsonProvider jsonProvider = new JacksonJsonProvider()
+            private final MappingProvider mappingProvider = new JacksonMappingProvider()
+
+            @Override
+            JsonProvider jsonProvider() {
+                return jsonProvider
+            }
+
+            @Override
+            MappingProvider mappingProvider() {
+                return mappingProvider
+            }
+
+            @Override
+            Set<Option> options() {
+                return EnumSet.noneOf(Option.class)
+            }
+        })
+    }
 
 }

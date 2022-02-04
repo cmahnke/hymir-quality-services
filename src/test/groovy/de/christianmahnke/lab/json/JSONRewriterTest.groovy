@@ -19,49 +19,20 @@ package de.christianmahnke.lab.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.Multimap
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.Option
 import de.digitalcollections.iiif.model.jackson.IiifObjectMapper
 import de.digitalcollections.iiif.model.sharedcanvas.Manifest
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
-import groovy.yaml.YamlSlurper
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.util.ResourceUtils
-
-import java.nio.charset.StandardCharsets
 
 import static org.junit.jupiter.api.Assertions.assertNotNull
 
 @Slf4j
 @TypeChecked
-class JSONRewriterTest {
-
-    static List<File> files = new ArrayList<File>()
-    String defaultCharset = StandardCharsets.UTF_8
-    List<Map<String, ?>> patterns
-    Multimap<String, String> substitutions
-
-    protected Multimap<String, String> extractPatterns(List<Map<String, ?>> patterns) {
-        Multimap<String, String> substitutions = ArrayListMultimap.create()
-        for (pattern in patterns) {
-            String from = pattern.get("pattern")
-            for (String subst in pattern.get("substitutions")) {
-                substitutions.put(from, subst)
-            }
-        }
-        return substitutions
-    }
-
-    @BeforeEach
-    void setup() {
-        files[0] = ResourceUtils.getFile("classpath:data/record_DE-MUS-062622_kenom_127703/record_DE-MUS-062622_kenom_127703.json")
-        files[1] = ResourceUtils.getFile("classpath:data/DE-611-HS-3461927/DE-611-HS-3461927.json")
-        Map<String, Map<String, Map<String, ?>>> rules = new YamlSlurper().parse(ResourceUtils.getFile("classpath:rules.yml")) as Map<String, Map<String, Map<String, ?>>>
-        patterns = rules.get("resourceRepository").get("resolved").get("patterns") as List<Map<String, ?>>
-        substitutions = extractPatterns(patterns)
-    }
+class JSONRewriterTest extends ManifestTestBase {
 
     @Test
     void testRewriteURL() {
@@ -131,4 +102,21 @@ class JSONRewriterTest {
         }
     }
 
+    /*
+    @Test
+    void testSeeAlso() {
+        JSONRewriter.setupJSONPath()
+        Configuration pathConf = Configuration.builder().options(Option.AS_PATH_LIST).build()
+        files.forEach (file) -> {
+            InputStream is = new FileInputStream((file))
+            // Path context is only used for queries
+            //def pathCtx = JsonPath.using(pathConf).parse(is)
+
+            String label = "LIDO"
+            def valueCtx = JsonPath.parse(is)
+            def url = valueCtx.read('$.seeAlso')
+
+        }
+    }
+    */
 }
