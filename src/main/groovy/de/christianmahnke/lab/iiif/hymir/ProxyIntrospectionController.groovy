@@ -21,6 +21,7 @@ import de.christianmahnke.lab.iiif.hymir.util.BackendMappingUtil
 import de.digitalcollections.iiif.hymir.model.api.HymirPlugin
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -37,7 +38,10 @@ import javax.servlet.http.HttpServletRequest
 @RequestMapping(value = "/mappings")
 @CompileStatic
 @TypeChecked
+@Slf4j
 class ProxyIntrospectionController implements HymirPlugin {
+
+    static String DEFAULT_PREFIX = '/image/v2/'
 
     @Value('${custom.iiif.image.urlPrefix:/image/v2/}')
     public static String iiifImageApiUrlPrefix
@@ -45,7 +49,7 @@ class ProxyIntrospectionController implements HymirPlugin {
     @Autowired
     BackendMappingUtil bmu
 
-    ProxyIntrospectionController (@Autowired BackendMappingUtil bmu) {
+    ProxyIntrospectionController(@Autowired BackendMappingUtil bmu) {
         this.bmu = bmu
     }
 
@@ -73,6 +77,14 @@ class ProxyIntrospectionController implements HymirPlugin {
         return base
     }
 
+    String getIiifImageApiUrlPrefix() {
+        if (iiifImageApiUrlPrefix == null) {
+            log.warn('Setting default value by Spring failed - using provided one')
+            return DEFAULT_PREFIX
+        }
+        return iiifImageApiUrlPrefix
+    }
+
     @CrossOrigin
     @RequestMapping(value = "/json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<Map> listBackendsJSON() {
@@ -81,14 +93,14 @@ class ProxyIntrospectionController implements HymirPlugin {
 
     @RequestMapping(value = "/json/patterns", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<Map> listPatternsJSON(HttpServletRequest request) {
-        String newPrefix = getUrlBase(request) + iiifImageApiUrlPrefix
+        String newPrefix = getUrlBase(request) + getIiifImageApiUrlPrefix()
         return new ResponseEntity<Map>(bmu.mappingPatterns(newPrefix), HttpStatus.OK)
     }
 
     @RequestMapping(value = "/js", method = RequestMethod.GET, produces = "text/javascript")
     @CrossOrigin
     ResponseEntity<String> listBackendsJS(HttpServletRequest request) {
-        String newPrefix = getUrlBase(request) + iiifImageApiUrlPrefix
+        String newPrefix = getUrlBase(request) + getIiifImageApiUrlPrefix()
         StringBuilder js = new StringBuilder()
         js.append("var proxyBaseUrl = '${newPrefix}';\n\n")
         js.append("function rewriteURL(url) {\n")

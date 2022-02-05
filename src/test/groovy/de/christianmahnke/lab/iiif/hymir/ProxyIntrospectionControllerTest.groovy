@@ -47,6 +47,9 @@ import static org.junit.jupiter.api.Assertions.*
 class ProxyIntrospectionControllerTest {
 
     @Autowired
+    ProxyIntrospectionController controller
+
+    @Autowired
     private MockMvc mockMvc
 
     protected ScriptEngine getEngine() {
@@ -81,5 +84,12 @@ class ProxyIntrospectionControllerTest {
 
         assertTrue(object instanceof Map)
         assertNotNull(object)
+    }
+
+    @Test
+    void testPrefix() {
+        assertNotNull(controller.getIiifImageApiUrlPrefix())
+
+
     }
 }
