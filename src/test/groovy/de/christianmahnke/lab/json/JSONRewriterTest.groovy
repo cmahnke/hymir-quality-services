@@ -17,6 +17,7 @@
  */
 package de.christianmahnke.lab.json
 
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
 import com.jayway.jsonpath.Configuration
@@ -100,10 +101,11 @@ class JSONRewriterTest extends ManifestTestBase {
             }
             JSONRewriter jr = new JSONRewriter(ops)
             InputStream result = jr.rewrite(new FileInputStream(file))
-            log.debug("Content:\n ${new String(result.readAllBytes(), defaultCharset)}")
             ObjectMapper mapper = new IiifObjectMapper()
             ObjectReader r = mapper.readerFor(Manifest.class)
             Manifest manifest = r.readValue(result)
+            result.reset()
+            log.debug("Content:\n ${new String(result.readAllBytes(), defaultCharset)}")
             assertNotNull(manifest)
         }
     }
@@ -121,10 +123,11 @@ class JSONRewriterTest extends ManifestTestBase {
             ops.add(new XSLTSeeAlsoRewriteOperation('LIDO', new FileInputStream(transformation)))
             JSONRewriter jr = new JSONRewriter(ops)
             InputStream result = jr.rewrite(new FileInputStream(file))
-            log.debug("Content:\n ${new String(result.readAllBytes(), defaultCharset)}")
             ObjectMapper mapper = new IiifObjectMapper()
             ObjectReader r = mapper.readerFor(Manifest.class)
             Manifest manifest = r.readValue(result)
+            result.reset()
+            log.debug("Content:\n ${new String(result.readAllBytes(), defaultCharset)}")
             assertNotNull(manifest)
         }
     }
