@@ -22,11 +22,16 @@ import com.fasterxml.jackson.databind.ObjectReader
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.TypeRef
 import de.digitalcollections.iiif.model.jackson.IiifObjectMapper
 import de.digitalcollections.iiif.model.sharedcanvas.Manifest
 import groovy.transform.TypeChecked
 import groovy.util.logging.Slf4j
+import net.sf.saxon.s9api.*
 import org.junit.jupiter.api.Test
+import org.springframework.util.ResourceUtils
+
+import javax.xml.transform.stream.StreamSource
 
 import static org.junit.jupiter.api.Assertions.assertNotNull
 
@@ -95,6 +100,7 @@ class JSONRewriterTest extends ManifestTestBase {
             }
             JSONRewriter jr = new JSONRewriter(ops)
             InputStream result = jr.rewrite(new FileInputStream(file))
+            log.debug("Content:\n ${new String(result.readAllBytes(), defaultCharset)}")
             ObjectMapper mapper = new IiifObjectMapper()
             ObjectReader r = mapper.readerFor(Manifest.class)
             Manifest manifest = r.readValue(result)
@@ -102,21 +108,25 @@ class JSONRewriterTest extends ManifestTestBase {
         }
     }
 
-    /*
+
     @Test
     void testSeeAlso() {
         JSONRewriter.setupJSONPath()
         Configuration pathConf = Configuration.builder().options(Option.AS_PATH_LIST).build()
+        def transformation = ResourceUtils.getFile("classpath:xslt/lido2json.xsl")
         files.forEach (file) -> {
-            InputStream is = new FileInputStream((file))
-            // Path context is only used for queries
-            //def pathCtx = JsonPath.using(pathConf).parse(is)
-
-            String label = "LIDO"
-            def valueCtx = JsonPath.parse(is)
-            def url = valueCtx.read('$.seeAlso')
-
+            List<JSONRewriteOperation> ops = new ArrayList<>()
+            ops.add(new GoobiViewerLanguageRewriteOperation())
+            ops.add(new DeletePathRewriteOperation('$.service.label'))
+            ops.add(new XSLTSeeAlsoRewriteOperation('LIDO', new FileInputStream(transformation)))
+            JSONRewriter jr = new JSONRewriter(ops)
+            InputStream result = jr.rewrite(new FileInputStream(file))
+            log.debug("Content:\n ${new String(result.readAllBytes(), defaultCharset)}")
+            ObjectMapper mapper = new IiifObjectMapper()
+            ObjectReader r = mapper.readerFor(Manifest.class)
+            Manifest manifest = r.readValue(result)
+            assertNotNull(manifest)
         }
     }
-    */
+
 }

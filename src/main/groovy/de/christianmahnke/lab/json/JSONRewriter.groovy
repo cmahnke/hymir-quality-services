@@ -93,7 +93,19 @@ class JSONRewriter {
                     if (newValue == null) {
                         valueCtx.delete(path)
                     } else {
-                        valueCtx.set(path, newValue)
+                        if (path != '$') {
+                            valueCtx.set(path, newValue)
+                        } else {
+                            valueCtx.delete('$.*')
+                            //TODO: Check if newValue is either a Map, an array or a scalar value
+                            if (valueCtx.read('$') instanceof Map) {
+                                for (entry in ((Map) newValue).keySet()) {
+                                    valueCtx.put('$', entry as String, ((Map) newValue).get(entry))
+                                }
+                            } else if (valueCtx.read('$') instanceof List) {
+                                valueCtx.add('$', newValue)
+                            }
+                        }
                     }
                 }
             }

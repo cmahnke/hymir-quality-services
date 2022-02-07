@@ -25,15 +25,14 @@ import groovy.yaml.YamlSlurper
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.MutablePropertySources
 import org.springframework.core.env.PropertiesPropertySource
 import org.springframework.core.env.PropertySource
 import org.springframework.core.io.ByteArrayResource
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.util.ResourceUtils
@@ -98,17 +97,18 @@ class ManifestTestBase {
         substitutions = extractPatterns(patterns)
     }
 
-    @Configuration
+    @TestConfiguration
     static class DynamicRulesPropertySourceConfig {
         @Autowired
         private ConfigurableEnvironment env
 
         @Bean
-        PropertySource dynamicRilesPropertySource() {
+        PropertySource dynamicRulesPropertySource() {
             def ret = rulesYml('generated-rules.yml')
             MutablePropertySources sources = env.getPropertySources()
             sources.addFirst(ret)
             return ret
         }
     }
+
 }
