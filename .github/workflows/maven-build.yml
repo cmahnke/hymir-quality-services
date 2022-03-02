@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: "Chekout IIIF API (local version)"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: 'cmahnke/iiif-apis'
       - name: Set up JDK 11
@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: "Chekout IIIF API (local version)"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: 'cmahnke/iiif-server-hymir'
       - name: Set up JDK 11
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
