@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Version from parent is 2.5.4 - but this version causes some problems -->
-        <spring.boot.version>2.6.4</spring.boot.version>
+        <spring.boot.version>2.7.3</spring.boot.version>
         <spring.version>5.3.15</spring.version>
         <groovy.version>3.0.9</groovy.version>
         <opencv.version>4.5.1-2</opencv.version>
@@ -24,7 +24,7 @@
         <imgscalr.version>4.2</imgscalr.version>
         <jansi.version>2.4.0</jansi.version>
         <jsonpath.version>2.7.0</jsonpath.version>
-        <jackson.version>2.13.2</jackson.version>
+        <jackson.version>2.13.3</jackson.version>
         <download.verbose>false</download.verbose>
     </properties>
 
